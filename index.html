@@ -665,20 +665,32 @@
                 state.web3 = new Web3(window.ethereum);
                 state.contract = new state.web3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
 
+                console.log('Account connected:', state.account);
+                console.log('Contract initialized:', state.contract);
+
                 await switchChain();
                 updateUI();
-                loadArticles();
+                
+                setTimeout(() => {
+                    loadArticles();
+                }, 1000);
 
                 window.ethereum.on('accountsChanged', (accounts) => {
                     if (accounts.length === 0) {
                         state.account = null;
                         state.isAdmin = false;
+                        state.contract = null;
+                        updateUI();
+                    } else if (accounts[0] !== state.account) {
+                        state.account = accounts[0];
                         updateUI();
                     }
                 });
+
+                showToast('✅ Wallet connected!');
             } catch (error) {
                 console.error('Connection failed:', error);
-                showToast('Connection failed');
+                showToast('❌ Connection failed');
             }
         }
 
@@ -730,6 +742,11 @@
         async function publishArticle(e) {
             e.preventDefault();
 
+            if (!state.account) {
+                showToast('Please connect wallet first');
+                return;
+            }
+
             if (!state.isAdmin) {
                 showToast('Only admin can publish articles');
                 return;
@@ -739,8 +756,23 @@
             const content = elements.content.value.trim();
             const sourceUrl = elements.sourceUrl.value.trim();
 
-            if (!title || !content) {
-                showToast('Please fill in required fields');
+            if (!title || title.length === 0) {
+                showToast('Please enter article title');
+                return;
+            }
+
+            if (!content || content.length === 0) {
+                showToast('Please enter article content');
+                return;
+            }
+
+            if (title.length > 500) {
+                showToast('Title too long (max 500 characters)');
+                return;
+            }
+
+            if (content.length > 10000) {
+                showToast('Content too long (max 10000 characters)');
                 return;
             }
 
@@ -748,16 +780,40 @@
             elements.btnPublish.innerHTML = '<span class="loading"><span class="spinner"></span> Publishing...</span>';
 
             try {
-                const tx = await state.contract.methods.publishArticle(title, content, sourceUrl).send({
-                    from: state.account
+                if (!state.contract) {
+                    showToast('Contract not initialized');
+                    return;
+                }
+
+                const tx = await state.contract.methods.publishArticle(
+                    title, 
+                    content, 
+                    sourceUrl
+                ).send({
+                    from: state.account,
+                    gas: 300000
                 });
 
-                showToast('Article published successfully! 🎉');
+                console.log('Transaction successful:', tx);
+                showToast('✅ Article published successfully!');
                 clearForm();
-                await loadArticles();
+                
+                setTimeout(() => {
+                    loadArticles();
+                }, 2000);
+
             } catch (error) {
-                console.error('Publish error:', error);
-                showToast('Error publishing article');
+                console.error('Full error object:', error);
+                
+                if (error.message.includes('User denied')) {
+                    showToast('❌ Transaction rejected by user');
+                } else if (error.message.includes('insufficient')) {
+                    showToast('❌ Insufficient balance');
+                } else if (error.message.includes('revert')) {
+                    showToast('❌ Transaction reverted');
+                } else {
+                    showToast('❌ Error: ' + (error.message.substring(0, 50) || 'Unknown error'));
+                }
             } finally {
                 elements.btnPublish.disabled = false;
                 elements.btnPublish.textContent = 'Publish to Blockchain';
