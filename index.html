@@ -1,934 +1,277 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MONAD NEWS - Web3 News Platform</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3.js/1.10.0/web3.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #0a0e27 0%, #16213e 50%, #0f3460 100%);
-            color: #e0e0e0;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Navbar */
-        .navbar {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            background: rgba(10, 14, 39, 0.85);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
-            z-index: 1000;
-            padding: 1rem 2rem;
-        }
-
-        .navbar-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo-section {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .logo {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 24px;
-            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.3);
-        }
-
-        .title {
-            font-size: 28px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: -0.5px;
-        }
-
-        .nav-actions {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-
-        .wallet-status {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1.5rem;
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            border-radius: 8px;
-            font-size: 14px;
-        }
-
-        .wallet-dot {
-            width: 8px;
-            height: 8px;
-            background: #10b981;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .btn-connect {
-            padding: 0.75rem 1.75rem;
-            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
-            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
-        }
-
-        .btn-connect:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.6);
-        }
-
-        .btn-connect:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .btn-menu {
-            display: none;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        /* Main Content */
-        main {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 120px 2rem 3rem 2rem;
-        }
-
-        /* Admin Panel */
-        .admin-panel {
-            background: rgba(20, 30, 60, 0.6);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            border-radius: 16px;
-            padding: 2.5rem;
-            margin-bottom: 3rem;
-            backdrop-filter: blur(10px);
-            display: none;
-        }
-
-        .admin-panel.show {
-            display: block;
-        }
-
-        .admin-panel h2 {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 2rem;
-            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 0.75rem;
-            color: #cbd5e1;
-        }
-
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 1rem;
-            background: rgba(15, 23, 42, 0.5);
-            border: 1px solid rgba(139, 92, 246, 0.2);
-            border-radius: 8px;
-            color: #e0e0e0;
-            font-family: inherit;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-
-        .form-group textarea {
-            min-height: 140px;
-            resize: vertical;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #8b5cf6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-        }
-
-        .form-actions {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-
-        .btn-publish {
-            flex: 1;
-            padding: 1rem;
-            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 15px;
-        }
-
-        .btn-publish:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
-        }
-
-        .btn-publish:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .btn-cancel {
-            padding: 1rem 2rem;
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            border-radius: 8px;
-            color: #8b5cf6;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-cancel:hover {
-            background: rgba(139, 92, 246, 0.2);
-        }
-
-        /* Articles Grid */
-        .articles-section {
-            margin-top: 3rem;
-        }
-
-        .section-title {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 2rem;
-            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .articles-grid {
-            display: grid;
-            gap: 2rem;
-        }
-
-        .article-card {
-            background: rgba(20, 30, 60, 0.4);
-            border: 1px solid rgba(139, 92, 246, 0.2);
-            border-radius: 16px;
-            padding: 2rem;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .article-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.4), transparent);
-        }
-
-        .article-card:hover {
-            border-color: rgba(139, 92, 246, 0.4);
-            background: rgba(20, 30, 60, 0.6);
-            transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(139, 92, 246, 0.15);
-        }
-
-        .article-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .article-title {
-            font-size: 22px;
-            font-weight: 700;
-            color: #f1f5f9;
-            line-height: 1.4;
-            margin-bottom: 0.5rem;
-        }
-
-        .article-card:hover .article-title {
-            color: #8b5cf6;
-        }
-
-        .article-date {
-            font-size: 13px;
-            color: #8b5cf6;
-            font-weight: 500;
-        }
-
-        .article-content {
-            color: #cbd5e1;
-            line-height: 1.7;
-            margin-bottom: 1.5rem;
-            font-size: 15px;
-        }
-
-        .article-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 1.5rem;
-            border-top: 1px solid rgba(139, 92, 246, 0.1);
-        }
-
-        .article-source {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #8b5cf6;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .article-source:hover {
-            color: #ec4899;
-            gap: 0.75rem;
-        }
-
-        .btn-share {
-            padding: 0.75rem 1.5rem;
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            border-radius: 6px;
-            color: #8b5cf6;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn-share:hover {
-            background: rgba(139, 92, 246, 0.2);
-            border-color: #8b5cf6;
-            transform: translateX(2px);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: #64748b;
-        }
-
-        .empty-state p {
-            font-size: 18px;
-        }
-
-        /* Footer */
-        footer {
-            margin-top: 4rem;
-            padding: 2rem;
-            border-top: 1px solid rgba(139, 92, 246, 0.2);
-            text-align: center;
-            color: #64748b;
-            font-size: 14px;
-        }
-
-        .footer-credit {
-            color: #8b5cf6;
-            text-decoration: none;
-            transition: color 0.3s ease;
-            font-weight: 600;
-        }
-
-        .footer-credit:hover {
-            color: #ec4899;
-        }
-
-        .loading {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .spinner {
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            padding: 1rem 1.5rem;
-            background: rgba(16, 185, 129, 0.2);
-            border: 1px solid rgba(16, 185, 129, 0.5);
-            border-radius: 8px;
-            color: #10b981;
-            font-size: 14px;
-            animation: slideIn 0.3s ease;
-            z-index: 2000;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(400px);
-                opacity: 0;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MONAD NEWS - Latest Monad Ecosystem Updates</title>
+  <meta name="description" content="The most trusted source for real-time Monad ecosystem news, posted and verified on-chain."/>
+  
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🟪</text></svg>">
+  
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            monad: {
+              500: '#a855f7',
+              600: '#9333ea',
+              700: '#7e22ce',
             }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+          }
         }
+      }
+    }
+  </script>
 
-        @media (max-width: 768px) {
-            .navbar {
-                padding: 1rem;
-            }
+  <!-- Ethers.js -->
+  <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="text/javascript"></script>
 
-            .navbar-container {
-                gap: 1rem;
-            }
-
-            .title {
-                font-size: 20px;
-            }
-
-            .btn-menu {
-                display: block;
-            }
-
-            .nav-actions {
-                gap: 0.5rem;
-            }
-
-            .wallet-status {
-                display: none;
-            }
-
-            main {
-                padding: 100px 1rem 2rem 1rem;
-            }
-
-            .admin-panel {
-                padding: 1.5rem;
-            }
-
-            .article-card {
-                padding: 1.5rem;
-            }
-
-            .article-header {
-                flex-direction: column;
-            }
-
-            .article-footer {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-        }
-    </style>
+  <style>
+    .gradient-bg {
+      background: linear-gradient(135deg, #0f0f0f 0%, #1a0033 100%);
+    }
+    .card-hover {
+      transition: all 0.3s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(168, 85, 247, 0.25);
+    }
+    .monad-glow {
+      box-shadow: 0 0 30px rgba(168, 85, 247, 0.4);
+    }
+  </style>
 </head>
-<body>
-    <!-- Navbar -->
-    <nav class="navbar">
-        <div class="navbar-container">
-            <div class="logo-section">
-                <div class="logo">M</div>
-                <div class="title">MONAD NEWS</div>
-            </div>
-            <div class="nav-actions">
-                <div class="wallet-status" id="walletStatus" style="display: none;">
-                    <div class="wallet-dot"></div>
-                    <span id="walletAddress">Connecting...</span>
-                </div>
-                <button class="btn-connect" id="btnConnect">Connect Wallet</button>
-                <button class="btn-menu" id="btnMenu">≡</button>
-            </div>
+<body class="bg-gray-900 text-gray-100 gradient-bg min-h-screen">
+
+  <!-- Header -->
+  <header class="border-b border-purple-900/30 backdrop-blur-xl bg-black/50 sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+          MONAD NEWS
+        </h1>
+        <span class="text-xs bg-purple-900/50 px-3 py-1 rounded-full text-purple-300">On-Chain Verified</span>
+      </div>
+      
+      <w3m-button />
+    </div>
+  </header>
+
+  <!-- Admin Floating Button (only visible to admin) -->
+  <div id="adminPanel" class="fixed bottom-8 right-8 z-50 hidden">
+    <button id="openPostModal" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-2xl w-16 h-16 rounded-full shadow-2xl monad-glow flex items-center justify-center">
+      +
+    </button>
+  </div>
+
+  <!-- Main Content -->
+  <main class="max-w-6xl mx-auto px-6 py-12">
+    <div class="text-center mb-16">
+      <p class="text-xl text-gray-400 mb-4">Real-time news & updates from the Monad ecosystem</p>
+      <p class="text-sm text-gray-500">All articles are posted and timestamped on Monad Testnet — immutable & transparent</p>
+    </div>
+
+    <div id="newsContainer" class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+      <!-- Articles will be injected here -->
+      <div class="col-span-full text-center py-20">
+        <div class="inline-block animate-pulse">
+          <div class="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p class="text-gray-400">Loading latest Monad news...</p>
         </div>
-    </nav>
+      </div>
+    </div>
+  </main>
 
-    <!-- Main Content -->
-    <main>
-        <!-- Admin Panel -->
-        <div class="admin-panel" id="adminPanel">
-            <h2>📝 Publish New Article</h2>
-            <form id="articleForm">
-                <div class="form-group">
-                    <label for="title">Article Title</label>
-                    <input type="text" id="title" placeholder="Enter compelling headline" required>
-                </div>
-                <div class="form-group">
-                    <label for="content">Article Content</label>
-                    <textarea id="content" placeholder="Share the latest news about Monad ecosystem..." required></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="sourceUrl">Source URL</label>
-                    <input type="url" id="sourceUrl" placeholder="https://example.com">
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn-publish" id="btnPublish">Publish to Blockchain</button>
-                    <button type="button" class="btn-cancel" id="btnCancel">Clear</button>
-                </div>
-            </form>
-        </div>
+  <!-- Post Modal -->
+  <div id="postModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center">
+    <div class="bg-gray-900 border border-purple-800 rounded-2xl p-8 max-w-2xl mx-auto mt-20 shadow-2xl monad-glow">
+      <h2 class="text-2xl font-bold mb-6">Post New Article (Admin Only)</h2>
+      <textarea id="articleContent" placeholder="Write your article in markdown or plain text..." class="w-full h-64 bg-gray-800 border border-gray-700 rounded-lg p-4 text-gray-100 placeholder-gray-500 focus:outline-none focus:border-purple-500"></textarea>
+      <input type="text" id="sourceLink" placeholder="Source link (optional)" class="w-full mt-4 bg-gray-800 border border-gray-700 rounded-lg px-4 py-3"/>
+      
+      <div class="flex justify-end space-x-4 mt-6">
+        <button id="closeModal" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg">Cancel</button>
+        <button id="submitPost" class="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg font-medium">
+          Submit On-Chain
+        </button>
+      </div>
+      <p id="txStatus" class="mt-4 text-sm text-gray-400"></p>
+    </div>
+  </div>
 
-        <!-- Articles Section -->
-        <section class="articles-section">
-            <h2 class="section-title">Latest News</h2>
-            <div class="articles-grid" id="articlesGrid">
-                <div class="empty-state">
-                    <p>🚀 No articles yet. Stay tuned for updates!</p>
-                </div>
+  <!-- Footer -->
+  <footer class="mt-24 border-t border-purple-900/30 py-12 text-center">
+    <p class="text-gray-500">
+      Built for the Monad community • Credit: 
+      <a href="https://x.com/ega_2ez4crypto" target="_blank" class="text-purple-400 hover:underline">@ega_2ez4crypto</a>
+    </p>
+    <p class="text-xs text-gray-600 mt-2">Monad Testnet • Chain ID 10143</p>
+  </footer>
+
+  <!-- Web3Modal v4 CDN -->
+  <script src="https://unpkg.com/@web3modal/ethereum@4.2.2/dist/index.js"></script>
+  <script src="https://unpkg.com/@web3modal/wagmi@4.2.2/dist/index.js"></script>
+
+  <script type="module">
+    import { createWeb3Modal } from 'https://unpkg.com/@web3modal/wagmi@4.2.2/dist/index.js'
+    import { mainnet, configureChains, createClient, WagmiConfig } from 'https://unpkg.com/wagmi@1.4.13/dist/index.js'
+    import { publicProvider } from 'https://unpkg.com/wagmi@1.4.13/providers/public.js'
+    import { WalletConnectConnector } from 'https://unpkg.com/wagmi@1.4.13/connectors/walletConnect.js'
+    import { injected } from 'https://unpkg.com/wagmi@1.4.13/connectors/injected.js'
+
+    const monadTestnet = {
+      id: 10143,
+      name: 'Monad Testnet',
+      network: 'monad-testnet',
+      nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 },
+      rpcUrls: { default: { http: ['https://testnet-rpc.monad.xyz'] }, public: { http: ['https://testnet-rpc.monad.xyz'] } },
+      blockExplorers: { default: { name: 'MonadScan', url: 'https://testnet.monadscan.com' } },
+      testnet: true,
+    }
+
+    const { chains, provider } = configureChains([monadTestnet], [publicProvider()])
+
+    const client = createClient({
+      autoConnect: true,
+      connectors: [new WalletConnectConnector({ chains, options: { projectId: 'YOUR_PROJECT_ID_IF_YOU_WANT_WALLETCONNECT' } }), injected()],
+      provider
+    })
+
+    const modal = createWeb3Modal({
+      wagmiClient: client,
+      projectId: 'OPTIONAL_WALLETCONNECT_PROJECT_ID',
+      chains,
+      themeMode: 'dark',
+      themeVariables: { '--w3m-accent-color': '#a855f7' }
+    })
+
+    // Contract ABI (minimal - only what we need)
+    const contractABI = [
+      "event ArticlePosted(uint256 indexed id, address indexed author, string content, string source, uint256 timestamp)",
+      "function getArticleCount() view returns (uint256)",
+      "function articles(uint256) view returns (address author, string content, string source, uint256 timestamp)",
+      "function postArticle(string content, string source) external"
+    ]
+
+    const CONTRACT_ADDRESS = "0xa20e64fDB33D36A82311a3CE3fC01950A440D777"
+    const ADMIN_ADDRESS = "0x287aBD1674f25C524503cDA2f1FD42EbECC401eA".toLowerCase()
+
+    let provider, signer, contract, currentAccount = null
+
+    async function initContract() {
+      if (window.ethereum) {
+        provider = new ethers.providers.Web3Provider(window.ethereum)
+        await provider.send("eth_requestAccounts", [])
+        signer = provider.getSigner()
+        currentAccount = await signer.getAddress()
+        contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer)
+
+        // Show admin button only to admin
+        if (currentAccount.toLowerCase() === ADMIN_ADDRESS) {
+          document.getElementById("adminPanel").classList.remove("hidden")
+        }
+      }
+    }
+
+    // Load articles
+    async function loadArticles() {
+      if (!contract) await initContract()
+      if (!contract) return
+
+      const count = await contract.getArticleCount()
+      const container = document.getElementById("newsContainer")
+      container.innerHTML = ""
+
+      for (let i = count - 1; i >= 0; i--) {
+        const art = await contract.articles(i)
+        const date = new Date(art.timestamp * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+
+        const twitterText = encodeURIComponent(`🔥 Fresh Monad ecosystem update just dropped!\n\n${art.content.substring(0, 200)}...\n\nRead more on MONAD NEWS 👇`)
+
+        const articleHTML = `
+          <article class="bg-gray-800/50 backdrop-blur border border-purple-800/30 rounded-2xl p-8 card-hover monad-glow">
+            <div class="flex justify-between items-start mb-4">
+              <span class="text-xs bg-purple-900/50 text-purple-300 px-3 py-1 rounded-full">Article #${i + 1}</span>
+              <time class="text-sm text-gray-500">${date}</time>
             </div>
-        </section>
-    </main>
+            <p class="text-gray-200 leading-relaxed whitespace-pre-wrap">${art.content}</p>
+            ${art.source ? `<a href="${art.source}" target="_blank" class="text-purple-400 text-sm mt-4 inline-block hover:underline">Source ↗</a>` : ''}
+            
+            <div class="mt-6 pt-6 border-t border-gray-700 flex justify-end">
+              <a href="https://twitter.com/intent/tweet?text=${twitterText}&url=${encodeURIComponent(window.location.href)}" target="_blank"
+                 class="bg-[#1DA1F2] hover:bg-[#0d8aec] text-white px-5 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                <svg class="w-5 h-5" fill-current" viewBox="0 0 24 24"><path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"></path></svg>
+                Share on Twitter
+              </a>
+            </div>
+          </article>
+        `
+        container.innerHTML += articleHTML
+      }
+    }
 
-    <!-- Footer -->
-    <footer>
-        <p>MONAD NEWS © 2025 — Decentralized News Platform | Created by <a href="https://x.com/ega_2ez4crypto" target="_blank" rel="noopener noreferrer" class="footer-credit">@ega_2ez4crypto</a></p>
-    </footer>
+    // Modal controls
+    document.getElementById("openPostModal").onclick = () => {
+      document.getElementById("postModal").classList.remove("hidden")
+      document.getElementById("postModal").classList.add("flex")
+    }
 
-    <script>
-        // Configuration
-        const CONFIG = {
-            CONTRACT_ADDRESS: '0xa20e64fDB33D36A82311a3CE3fC01950A440D777',
-            ADMIN_ADDRESS: '0x287aBD1674f25C524503cDA2f1FD42EbECC401eA',
-            CHAIN_ID: 10143,
-            RPC_URL: 'https://testnet-rpc.monad.xyz'
-        };
+    document.getElementById("closeModal").onclick = () => {
+      document.getElementById("postModal").classList.add("hidden")
+      document.getElementById("postModal").classList.remove("flex")
+    }
 
-        const CONTRACT_ABI = [
-            {
-                inputs: [{ name: '_title', type: 'string' }, { name: '_content', type: 'string' }, { name: '_sourceUrl', type: 'string' }],
-                name: 'publishArticle',
-                outputs: [],
-                stateMutability: 'nonpayable',
-                type: 'function'
-            },
-            {
-                inputs: [{ name: '_limit', type: 'uint256' }],
-                name: 'getLatestArticleIds',
-                outputs: [{ name: '', type: 'uint256[]' }],
-                stateMutability: 'view',
-                type: 'function'
-            },
-            {
-                inputs: [{ name: '_id', type: 'uint256' }],
-                name: 'getArticle',
-                outputs: [
-                    { name: 'id', type: 'uint256' },
-                    { name: 'title', type: 'string' },
-                    { name: 'content', type: 'string' },
-                    { name: 'sourceUrl', type: 'string' },
-                    { name: 'timestamp', type: 'uint256' },
-                    { name: 'author', type: 'address' }
-                ],
-                stateMutability: 'view',
-                type: 'function'
-            },
-            {
-                inputs: [],
-                name: 'getTotalArticles',
-                outputs: [{ name: '', type: 'uint256' }],
-                stateMutability: 'view',
-                type: 'function'
-            }
-        ];
+    // Submit post
+    document.getElementById("submitPost").onclick = async () => {
+      const content = document.getElementById("articleContent").value.trim()
+      const source = document.getElementById("sourceLink").value.trim()
+      if (!content) return alert("Article content is required")
 
-        // State
-        let state = {
-            account: null,
-            isAdmin: false,
-            articles: [],
-            web3: null,
-            contract: null
-        };
+      document.getElementById("submitPost").disabled = true
+      document.getElementById("txStatus").textContent = "Sending transaction... (Monad Testnet)"
 
-        // DOM Elements
-        const elements = {
-            btnConnect: document.getElementById('btnConnect'),
-            walletStatus: document.getElementById('walletStatus'),
-            walletAddress: document.getElementById('walletAddress'),
-            adminPanel: document.getElementById('adminPanel'),
-            articlesGrid: document.getElementById('articlesGrid'),
-            articleForm: document.getElementById('articleForm'),
-            btnPublish: document.getElementById('btnPublish'),
-            btnCancel: document.getElementById('btnCancel'),
-            title: document.getElementById('title'),
-            content: document.getElementById('content'),
-            sourceUrl: document.getElementById('sourceUrl')
-        };
+      try {
+        const tx = await contract.postArticle(content, source)
+        document.getElementById("txStatus").textContent = "Waiting for confirmation..."
+        await tx.wait()
+        document.getElementById("txStatus").textContent = "Posted successfully! 🎉"
+        setTimeout(() => {
+          document.getElementById("postModal").classList.add("hidden")
+          loadArticles()
+        }, 2000)
+      } catch (err) {
+        console.error(err)
+        document.getElementById("txStatus").textContent = "Transaction failed: " + (err.message || err)
+      } finally {
+        document.getElementById("submitPost").disabled = false
+      }
+    }
 
-        // Event Listeners
-        elements.btnConnect.addEventListener('click', connectWallet);
-        elements.btnPublish.addEventListener('click', publishArticle);
-        elements.btnCancel.addEventListener('click', clearForm);
+    // Auto-load on connect / page load
+    window.addEventListener('load', async () => {
+      await initContract()
+      await loadArticles()
+      setInterval(loadArticles, 30000) // refresh every 30s
+    })
 
-        // Initialize
-        window.addEventListener('load', () => {
-            checkWalletConnection();
-            loadArticles();
-        });
-
-        async function checkWalletConnection() {
-            if (typeof window.ethereum !== 'undefined') {
-                try {
-                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                    if (accounts.length > 0) {
-                        state.account = accounts[0];
-                        updateUI();
-                    }
-                } catch (error) {
-                    console.error('Wallet check failed:', error);
-                }
-            }
-        }
-
-        async function connectWallet() {
-            if (typeof window.ethereum === 'undefined') {
-                showToast('Please install MetaMask');
-                return;
-            }
-
-            try {
-                const accounts = await window.ethereum.request({
-                    method: 'eth_requestAccounts'
-                });
-
-                state.account = accounts[0];
-                state.web3 = new Web3(window.ethereum);
-                state.contract = new state.web3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
-
-                console.log('Account connected:', state.account);
-                console.log('Contract initialized:', state.contract);
-
-                await switchChain();
-                updateUI();
-                
-                setTimeout(() => {
-                    loadArticles();
-                }, 1000);
-
-                window.ethereum.on('accountsChanged', (accounts) => {
-                    if (accounts.length === 0) {
-                        state.account = null;
-                        state.isAdmin = false;
-                        state.contract = null;
-                        updateUI();
-                    } else if (accounts[0] !== state.account) {
-                        state.account = accounts[0];
-                        updateUI();
-                    }
-                });
-
-                showToast('✅ Wallet connected!');
-            } catch (error) {
-                console.error('Connection failed:', error);
-                showToast('❌ Connection failed');
-            }
-        }
-
-        async function switchChain() {
-            try {
-                await window.ethereum.request({
-                    method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: '0x' + CONFIG.CHAIN_ID.toString(16) }]
-                });
-            } catch (switchError) {
-                if (switchError.code === 4902) {
-                    try {
-                        await window.ethereum.request({
-                            method: 'wallet_addEthereumChain',
-                            params: [{
-                                chainId: '0x' + CONFIG.CHAIN_ID.toString(16),
-                                chainName: 'Monad Testnet',
-                                rpcUrls: [CONFIG.RPC_URL],
-                                nativeCurrency: { name: 'Monad', symbol: 'MON', decimals: 18 }
-                            }]
-                        });
-                    } catch (error) {
-                        console.error('Chain addition failed:', error);
-                    }
-                }
-            }
-        }
-
-        function updateUI() {
-            if (state.account) {
-                state.isAdmin = state.account.toLowerCase() === CONFIG.ADMIN_ADDRESS.toLowerCase();
-                
-                elements.btnConnect.style.display = 'none';
-                elements.walletStatus.style.display = 'flex';
-                elements.walletAddress.textContent = `${state.account.slice(0, 6)}...${state.account.slice(-4)}`;
-                
-                if (state.isAdmin) {
-                    elements.adminPanel.classList.add('show');
-                } else {
-                    elements.adminPanel.classList.remove('show');
-                }
-            } else {
-                elements.btnConnect.style.display = 'block';
-                elements.walletStatus.style.display = 'none';
-                elements.adminPanel.classList.remove('show');
-            }
-        }
-
-        async function publishArticle(e) {
-            e.preventDefault();
-
-            if (!state.account) {
-                showToast('Please connect wallet first');
-                return;
-            }
-
-            if (!state.isAdmin) {
-                showToast('Only admin can publish articles');
-                return;
-            }
-
-            const title = elements.title.value.trim();
-            const content = elements.content.value.trim();
-            const sourceUrl = elements.sourceUrl.value.trim();
-
-            if (!title || title.length === 0) {
-                showToast('Please enter article title');
-                return;
-            }
-
-            if (!content || content.length === 0) {
-                showToast('Please enter article content');
-                return;
-            }
-
-            if (title.length > 500) {
-                showToast('Title too long (max 500 characters)');
-                return;
-            }
-
-            if (content.length > 10000) {
-                showToast('Content too long (max 10000 characters)');
-                return;
-            }
-
-            elements.btnPublish.disabled = true;
-            elements.btnPublish.innerHTML = '<span class="loading"><span class="spinner"></span> Publishing...</span>';
-
-            try {
-                if (!state.contract) {
-                    showToast('Contract not initialized');
-                    return;
-                }
-
-                const tx = await state.contract.methods.publishArticle(
-                    title, 
-                    content, 
-                    sourceUrl
-                ).send({
-                    from: state.account,
-                    gas: 300000
-                });
-
-                console.log('Transaction successful:', tx);
-                showToast('✅ Article published successfully!');
-                clearForm();
-                
-                setTimeout(() => {
-                    loadArticles();
-                }, 2000);
-
-            } catch (error) {
-                console.error('Full error object:', error);
-                
-                if (error.message.includes('User denied')) {
-                    showToast('❌ Transaction rejected by user');
-                } else if (error.message.includes('insufficient')) {
-                    showToast('❌ Insufficient balance');
-                } else if (error.message.includes('revert')) {
-                    showToast('❌ Transaction reverted');
-                } else {
-                    showToast('❌ Error: ' + (error.message.substring(0, 50) || 'Unknown error'));
-                }
-            } finally {
-                elements.btnPublish.disabled = false;
-                elements.btnPublish.textContent = 'Publish to Blockchain';
-            }
-        }
-
-        function clearForm() {
-            elements.articleForm.reset();
-        }
-
-        async function loadArticles() {
-            try {
-                if (!state.contract) return;
-
-                const total = await state.contract.methods.getTotalArticles().call();
-                const limit = Math.min(parseInt(total), 50);
-
-                if (limit === 0) {
-                    elements.articlesGrid.innerHTML = '<div class="empty-state"><p>🚀 No articles yet. Stay tuned for updates!</p></div>';
-                    return;
-                }
-
-                const ids = await state.contract.methods.getLatestArticleIds(limit).call();
-                state.articles = [];
-
-                for (let id of ids) {
-                    try {
-                        const article = await state.contract.methods.getArticle(id).call();
-                        state.articles.push({
-                            id: parseInt(id),
-                            title: article.title,
-                            content: article.content,
-                            sourceUrl: article.sourceUrl,
-                            timestamp: parseInt(article.timestamp),
-                            author: article.author
-                        });
-                    } catch (error) {
-                        console.error(`Error loading article ${id}:`, error);
-                    }
-                }
-
-                renderArticles();
-            } catch (error) {
-                console.error('Load articles error:', error);
-            }
-        }
-
-        function renderArticles() {
-            if (state.articles.length === 0) {
-                elements.articlesGrid.innerHTML = '<div class="empty-state"><p>🚀 No articles yet. Stay tuned for updates!</p></div>';
-                return;
-            }
-
-            elements.articlesGrid.innerHTML = state.articles.map(article => `
-                <div class="article-card">
-                    <div class="article-header">
-                        <div>
-                            <h3 class="article-title">${escapeHtml(article.title)}</h3>
-                            <p class="article-date">📅 ${formatDate(article.timestamp)}</p>
-                        </div>
-                    </div>
-                    <p class="article-content">${escapeHtml(article.content)}</p>
-                    <div class="article-footer">
-                        ${article.sourceUrl ? `
-                            <a href="${escapeHtml(article.sourceUrl)}" target="_blank" rel="noopener noreferrer" class="article-source">
-                                🔗 Read Source →
-                            </a>
-                        ` : '<span></span>'}
-                        <button class="btn-share" onclick="shareArticle('${escapeHtml(article.title)}')">
-                            𝕏 Share
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function shareArticle(title) {
-            const templates = [
-                `🚀 Breaking: "${title}" - Latest from Monad Ecosystem! Read on MONAD NEWS →`,
-                `📰 Essential Read: "${title}" - Don't miss this! Updates from Monad →`,
-                `💡 New: "${title}" - Important Monad ecosystem news! Check it out →`,
-                `🔥 Hot Topic: "${title}" - Latest from Monad. Read the story →`
-            ];
-
-            const template = templates[Math.floor(Math.random() * templates.length)];
-            const url = window.location.href;
-            const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(template)}&url=${encodeURIComponent(url)}`;
-            window.open(tweetUrl, '_blank');
-        }
-
-        function formatDate(timestamp) {
-            const date = new Date(timestamp * 1000);
-            return date.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            });
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function showToast(message) {
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
-
-        // Make shareArticle globally accessible
-        window.shareArticle = shareArticle;
-    </script>
+    // Reconnect on account change
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', () => location.reload())
+      window.ethereum.on('chainChanged', () => location.reload())
+    }
+  </script>
 </body>
 </html>
