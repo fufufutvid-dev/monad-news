@@ -368,29 +368,50 @@
             publishBtn.disabled = true;
 
             try {
-                const contractABI = [{
-                    "inputs": [
-                        {"type": "string", "name": "_title"},
-                        {"type": "string", "name": "_content"},
-                        {"type": "string", "name": "_sourceUrl"}
-                    ],
-                    "name": "publishArticle",
-                    "outputs": [],
-                    "stateMutability": "nonpayable",
-                    "type": "function"
-                }];
-
-                const provider = new ethers.providers.Web3Provider(window.ethereum);
-                const signer = provider.getSigner();
-                const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer);
+                // Encode function call data manually
+                const iface = new ethers.utils.Interface([
+                    "function publishArticle(string _title, string _content, string _sourceUrl)"
+                ]);
+                
+                const data = iface.encodeFunctionData("publishArticle", [title, content, sourceUrl]);
 
                 statusText.textContent = 'Please sign the transaction in your wallet...';
                 
-                const tx = await contract.publishArticle(title, content, sourceUrl);
+                // Send transaction using eth_sendTransaction
+                const txHash = await window.ethereum.request({
+                    method: 'eth_sendTransaction',
+                    params: [{
+                        from: walletAddress,
+                        to: CONTRACT_ADDRESS,
+                        data: data,
+                        gas: '0x493E0', // 300000 gas limit
+                    }]
+                });
                 
                 statusText.textContent = 'Confirming transaction on Monad Testnet...';
                 
-                const receipt = await tx.wait();
+                // Wait for transaction confirmation
+                let receipt = null;
+                let attempts = 0;
+                while (!receipt && attempts < 60) {
+                    try {
+                        receipt = await window.ethereum.request({
+                            method: 'eth_getTransactionReceipt',
+                            params: [txHash]
+                        });
+                        if (!receipt) {
+                            await new Promise(resolve => setTimeout(resolve, 2000));
+                            attempts++;
+                        }
+                    } catch (e) {
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        attempts++;
+                    }
+                }
+
+                if (!receipt) {
+                    throw new Error('Transaction timeout - please check explorer');
+                }
 
                 const article = {
                     id: `article:${Date.now()}`,
@@ -398,7 +419,7 @@
                     content: content,
                     sourceUrl: sourceUrl,
                     timestamp: Date.now(),
-                    txHash: receipt.transactionHash,
+                    txHash: txHash,
                     author: walletAddress
                 };
 
@@ -423,7 +444,7 @@
                 console.error('Error publishing:', error);
                 statusDiv.className = 'p-4 rounded-xl flex items-center space-x-3 bg-red-900/30 border border-red-500/30';
                 statusText.className = 'text-sm text-red-300';
-                statusText.textContent = 'Transaction failed: ' + error.message;
+                statusText.textContent = 'Transaction failed: ' + (error.message || 'Unknown error');
                 publishBtn.disabled = false;
             }
         }
