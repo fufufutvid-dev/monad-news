@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MONAD NEWS - Decentralized News Platform</title>
+    <title>MONAD NEWS - Web3 News Platform</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/web3.js/1.10.0/web3.min.js"></script>
     <style>
         * {
@@ -12,107 +12,112 @@
             box-sizing: border-box;
         }
 
-        :root {
-            --primary: #06b6d4;
-            --secondary: #2563eb;
-            --dark: #0f172a;
-            --darker: #020617;
-            --slate-900: #0f172a;
-            --slate-800: #1e293b;
-            --slate-700: #334155;
-            --slate-400: #94a3b8;
-            --slate-300: #cbd5e1;
-            --white: #ffffff;
-        }
-
-        html, body {
-            height: 100%;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-        }
-
         body {
-            background: linear-gradient(to bottom right, #0f172a, #1a1a2e, #0f172a);
-            color: var(--white);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #16213e 50%, #0f3460 100%);
+            color: #e0e0e0;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            overflow-x: hidden;
         }
 
+        /* Navbar */
         .navbar {
-            border-bottom: 1px solid var(--slate-800);
-            background: rgba(15, 23, 42, 0.5);
-            backdrop-filter: blur(16px);
-            position: sticky;
+            position: fixed;
             top: 0;
-            z-index: 50;
+            width: 100%;
+            background: rgba(10, 14, 39, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+            z-index: 1000;
+            padding: 1rem 2rem;
         }
 
-        .navbar-content {
-            max-width: 1280px;
+        .navbar-container {
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 1rem 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 2rem;
         }
 
-        .navbar-brand {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .navbar-logo {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 0.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 1.25rem;
-        }
-
-        .navbar-title {
-            font-size: 1.75rem;
-            font-weight: bold;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .navbar-actions {
+        .logo-section {
             display: flex;
             align-items: center;
             gap: 1rem;
         }
 
-        .wallet-info {
-            font-size: 0.875rem;
-            color: var(--slate-400);
+        .logo {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 24px;
+            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.3);
         }
 
-        .btn-post {
-            padding: 0.5rem 1.5rem;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        .title {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .wallet-status {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .wallet-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .btn-connect {
+            padding: 0.75rem 1.75rem;
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
             border: none;
-            border-radius: 0.5rem;
+            border-radius: 8px;
+            color: white;
             font-weight: 600;
-            color: var(--white);
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+            font-size: 14px;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
         }
 
-        .btn-post:hover {
-            box-shadow: 0 8px 25px rgba(6, 182, 212, 0.5);
+        .btn-connect:hover {
             transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.6);
         }
 
-        .btn-post:disabled {
+        .btn-connect:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
@@ -121,256 +126,292 @@
             display: none;
             background: none;
             border: none;
-            color: var(--white);
+            color: white;
+            font-size: 24px;
             cursor: pointer;
-            font-size: 1.5rem;
         }
 
-        .container {
-            max-width: 1280px;
+        /* Main Content */
+        main {
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 2rem 1.5rem;
-            flex: 1;
-            width: 100%;
+            padding: 120px 2rem 3rem 2rem;
         }
 
-        .form-container {
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid var(--slate-800);
-            border-radius: 0.75rem;
-            padding: 1.5rem;
-            backdrop-filter: blur(8px);
+        /* Admin Panel */
+        .admin-panel {
+            background: rgba(20, 30, 60, 0.6);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 16px;
+            padding: 2.5rem;
+            margin-bottom: 3rem;
+            backdrop-filter: blur(10px);
+            display: none;
+        }
+
+        .admin-panel.show {
+            display: block;
+        }
+
+        .admin-panel h2 {
+            font-size: 24px;
+            font-weight: 700;
             margin-bottom: 2rem;
-        }
-
-        .form-container h2 {
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .form-group {
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .form-group label {
             display: block;
-            font-size: 0.875rem;
-            margin-bottom: 0.5rem;
-            color: var(--slate-300);
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: #cbd5e1;
         }
 
         .form-group input,
         .form-group textarea {
             width: 100%;
-            padding: 0.75rem 1rem;
-            background: var(--slate-800);
-            border: 1px solid var(--slate-700);
-            border-radius: 0.5rem;
-            color: var(--white);
+            padding: 1rem;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 8px;
+            color: #e0e0e0;
             font-family: inherit;
-            font-size: 1rem;
+            font-size: 14px;
             transition: all 0.3s ease;
+        }
+
+        .form-group textarea {
+            min-height: 140px;
+            resize: vertical;
         }
 
         .form-group input:focus,
         .form-group textarea:focus {
             outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
-        }
-
-        .form-group textarea {
-            min-height: 120px;
-            resize: vertical;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
         }
 
         .form-actions {
             display: flex;
             gap: 1rem;
-            margin-top: 1.5rem;
+            margin-top: 2rem;
         }
 
-        .btn-primary {
+        .btn-publish {
             flex: 1;
-            padding: 0.75rem 1.5rem;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 1rem;
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
             border: none;
-            border-radius: 0.5rem;
+            border-radius: 8px;
+            color: white;
             font-weight: 600;
-            color: var(--white);
             cursor: pointer;
             transition: all 0.3s ease;
+            font-size: 15px;
         }
 
-        .btn-primary:hover:not(:disabled) {
-            box-shadow: 0 8px 25px rgba(6, 182, 212, 0.5);
+        .btn-publish:hover:not(:disabled) {
             transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
         }
 
-        .btn-primary:disabled {
-            opacity: 0.5;
+        .btn-publish:disabled {
+            opacity: 0.6;
             cursor: not-allowed;
         }
 
-        .btn-secondary {
-            padding: 0.75rem 1.5rem;
-            background: var(--slate-800);
-            border: none;
-            border-radius: 0.5rem;
+        .btn-cancel {
+            padding: 1rem 2rem;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 8px;
+            color: #8b5cf6;
             font-weight: 600;
-            color: var(--white);
             cursor: pointer;
             transition: all 0.3s ease;
         }
 
-        .btn-secondary:hover {
-            background: var(--slate-700);
+        .btn-cancel:hover {
+            background: rgba(139, 92, 246, 0.2);
+        }
+
+        /* Articles Grid */
+        .articles-section {
+            margin-top: 3rem;
+        }
+
+        .section-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .articles-grid {
             display: grid;
-            gap: 1.5rem;
+            gap: 2rem;
         }
 
         .article-card {
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid var(--slate-800);
-            border-radius: 0.75rem;
+            background: rgba(20, 30, 60, 0.4);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 16px;
             padding: 2rem;
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(10px);
             transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .article-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.4), transparent);
         }
 
         .article-card:hover {
-            border-color: rgba(6, 182, 212, 0.5);
+            border-color: rgba(139, 92, 246, 0.4);
+            background: rgba(20, 30, 60, 0.6);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(139, 92, 246, 0.15);
         }
 
         .article-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 1rem;
             gap: 1rem;
-        }
-
-        .article-title-section {
-            flex: 1;
+            margin-bottom: 1.5rem;
         }
 
         .article-title {
-            font-size: 1.5rem;
-            font-weight: bold;
+            font-size: 22px;
+            font-weight: 700;
+            color: #f1f5f9;
+            line-height: 1.4;
             margin-bottom: 0.5rem;
-            transition: color 0.3s ease;
         }
 
         .article-card:hover .article-title {
-            color: var(--primary);
+            color: #8b5cf6;
         }
 
         .article-date {
-            font-size: 0.875rem;
-            color: var(--slate-400);
-        }
-
-        .article-share {
-            padding: 0.75rem;
-            background: var(--slate-800);
-            border: none;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            color: var(--white);
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 48px;
-            height: 48px;
-        }
-
-        .article-share:hover {
-            background: rgba(6, 182, 212, 0.2);
+            font-size: 13px;
+            color: #8b5cf6;
+            font-weight: 500;
         }
 
         .article-content {
-            color: var(--slate-300);
-            margin-bottom: 1rem;
-            line-height: 1.6;
+            color: #cbd5e1;
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+            font-size: 15px;
+        }
+
+        .article-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(139, 92, 246, 0.1);
         }
 
         .article-source {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            color: var(--primary);
+            color: #8b5cf6;
             text-decoration: none;
-            transition: color 0.3s ease;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
         }
 
         .article-source:hover {
-            color: #00d4ff;
+            color: #ec4899;
+            gap: 0.75rem;
+        }
+
+        .btn-share {
+            padding: 0.75rem 1.5rem;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 6px;
+            color: #8b5cf6;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-share:hover {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: #8b5cf6;
+            transform: translateX(2px);
         }
 
         .empty-state {
             text-align: center;
-            padding: 5rem 1rem;
-            color: var(--slate-400);
+            padding: 4rem 2rem;
+            color: #64748b;
         }
 
         .empty-state p {
-            font-size: 1.25rem;
+            font-size: 18px;
         }
 
-        .footer {
-            border-top: 1px solid var(--slate-800);
-            background: rgba(15, 23, 42, 0.5);
-            backdrop-filter: blur(16px);
-            margin-top: auto;
-        }
-
-        .footer-content {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .footer-text {
-            color: var(--slate-400);
-            font-size: 0.875rem;
+        /* Footer */
+        footer {
+            margin-top: 4rem;
+            padding: 2rem;
+            border-top: 1px solid rgba(139, 92, 246, 0.2);
+            text-align: center;
+            color: #64748b;
+            font-size: 14px;
         }
 
         .footer-credit {
-            color: var(--primary);
+            color: #8b5cf6;
             text-decoration: none;
             transition: color 0.3s ease;
-            font-size: 0.875rem;
+            font-weight: 600;
         }
 
         .footer-credit:hover {
-            color: #00d4ff;
-        }
-
-        .hidden {
-            display: none !important;
+            color: #ec4899;
         }
 
         .loading {
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.75rem;
         }
 
         .spinner {
             width: 16px;
             height: 16px;
-            border: 2px solid rgba(6, 182, 212, 0.3);
-            border-top-color: var(--primary);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
@@ -379,35 +420,76 @@
             to { transform: rotate(360deg); }
         }
 
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.5);
+            border-radius: 8px;
+            color: #10b981;
+            font-size: 14px;
+            animation: slideIn 0.3s ease;
+            z-index: 2000;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
         @media (max-width: 768px) {
-            .navbar-actions {
-                flex-direction: column;
-                align-items: stretch;
+            .navbar {
+                padding: 1rem;
+            }
+
+            .navbar-container {
+                gap: 1rem;
+            }
+
+            .title {
+                font-size: 20px;
             }
 
             .btn-menu {
                 display: block;
             }
 
-            .navbar-actions .btn-post {
+            .nav-actions {
+                gap: 0.5rem;
+            }
+
+            .wallet-status {
                 display: none;
             }
 
-            .navbar-actions.mobile-menu .btn-post {
-                display: block;
-                width: 100%;
+            main {
+                padding: 100px 1rem 2rem 1rem;
+            }
+
+            .admin-panel {
+                padding: 1.5rem;
+            }
+
+            .article-card {
+                padding: 1.5rem;
             }
 
             .article-header {
                 flex-direction: column;
             }
 
-            .article-share {
-                width: 100%;
-            }
-
-            .footer-content {
+            .article-footer {
                 flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
             }
         }
     </style>
@@ -415,68 +497,71 @@
 <body>
     <!-- Navbar -->
     <nav class="navbar">
-        <div class="navbar-content">
-            <div class="navbar-brand">
-                <div class="navbar-logo">M</div>
-                <span class="navbar-title">MONAD NEWS</span>
+        <div class="navbar-container">
+            <div class="logo-section">
+                <div class="logo">M</div>
+                <div class="title">MONAD NEWS</div>
             </div>
-            <div class="navbar-actions" id="navbarActions">
-                <div class="wallet-info" id="walletInfo">Not connected</div>
-                <button class="btn-post" id="btnPost">+ Post Article</button>
+            <div class="nav-actions">
+                <div class="wallet-status" id="walletStatus" style="display: none;">
+                    <div class="wallet-dot"></div>
+                    <span id="walletAddress">Connecting...</span>
+                </div>
+                <button class="btn-connect" id="btnConnect">Connect Wallet</button>
+                <button class="btn-menu" id="btnMenu">≡</button>
             </div>
-            <button class="btn-menu" id="btnMenu">☰</button>
         </div>
     </nav>
 
-    <!-- Main Container -->
-    <div class="container">
-        <!-- Post Form -->
-        <div class="form-container hidden" id="formContainer">
-            <h2>Publish New Article</h2>
+    <!-- Main Content -->
+    <main>
+        <!-- Admin Panel -->
+        <div class="admin-panel" id="adminPanel">
+            <h2>📝 Publish New Article</h2>
             <form id="articleForm">
                 <div class="form-group">
                     <label for="title">Article Title</label>
-                    <input type="text" id="title" placeholder="Enter article title" required>
+                    <input type="text" id="title" placeholder="Enter compelling headline" required>
                 </div>
                 <div class="form-group">
                     <label for="content">Article Content</label>
-                    <textarea id="content" placeholder="Enter article content" required></textarea>
+                    <textarea id="content" placeholder="Share the latest news about Monad ecosystem..." required></textarea>
                 </div>
                 <div class="form-group">
                     <label for="sourceUrl">Source URL</label>
                     <input type="url" id="sourceUrl" placeholder="https://example.com">
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn-primary" id="btnPublish">Publish via Blockchain</button>
-                    <button type="button" class="btn-secondary" id="btnCancel">Cancel</button>
+                    <button type="button" class="btn-publish" id="btnPublish">Publish to Blockchain</button>
+                    <button type="button" class="btn-cancel" id="btnCancel">Clear</button>
                 </div>
             </form>
         </div>
 
-        <!-- Articles Feed -->
-        <div class="articles-grid" id="articlesFeed">
-            <div class="empty-state">
-                <p>No articles published yet. Check back soon!</p>
+        <!-- Articles Section -->
+        <section class="articles-section">
+            <h2 class="section-title">Latest News</h2>
+            <div class="articles-grid" id="articlesGrid">
+                <div class="empty-state">
+                    <p>🚀 No articles yet. Stay tuned for updates!</p>
+                </div>
             </div>
-        </div>
-    </div>
+        </section>
+    </main>
 
     <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-content">
-            <p class="footer-text">MONAD NEWS © 2025 - Decentralized News Platform</p>
-            <a href="https://x.com/ega_2ez4crypto" target="_blank" rel="noopener noreferrer" class="footer-credit">
-                Created by @ega_2ez4crypto
-            </a>
-        </div>
+    <footer>
+        <p>MONAD NEWS © 2025 — Decentralized News Platform | Created by <a href="https://x.com/ega_2ez4crypto" target="_blank" rel="noopener noreferrer" class="footer-credit">@ega_2ez4crypto</a></p>
     </footer>
 
     <script>
         // Configuration
-        const CONTRACT_ADDRESS = '0xa20e64fDB33D36A82311a3CE3fC01950A440D777';
-        const ADMIN_ADDRESS = '0x287aBD1674f25C524503cDA2f1FD42EbECC401eA';
-        const CHAIN_ID = 10143;
-        const RPC_URL = 'https://testnet-rpc.monad.xyz';
+        const CONFIG = {
+            CONTRACT_ADDRESS: '0xa20e64fDB33D36A82311a3CE3fC01950A440D777',
+            ADMIN_ADDRESS: '0x287aBD1674f25C524503cDA2f1FD42EbECC401eA',
+            CHAIN_ID: 10143,
+            RPC_URL: 'https://testnet-rpc.monad.xyz'
+        };
 
         const CONTRACT_ABI = [
             {
@@ -517,86 +602,91 @@
         ];
 
         // State
-        let account = null;
-        let isAdmin = false;
-        let articles = [];
-        let web3 = null;
-        let contract = null;
+        let state = {
+            account: null,
+            isAdmin: false,
+            articles: [],
+            web3: null,
+            contract: null
+        };
 
         // DOM Elements
-        const walletInfo = document.getElementById('walletInfo');
-        const btnPost = document.getElementById('btnPost');
-        const btnMenu = document.getElementById('btnMenu');
-        const navbarActions = document.getElementById('navbarActions');
-        const formContainer = document.getElementById('formContainer');
-        const articlesFeed = document.getElementById('articlesFeed');
-        const articleForm = document.getElementById('articleForm');
-        const btnPublish = document.getElementById('btnPublish');
-        const btnCancel = document.getElementById('btnCancel');
-        const titleInput = document.getElementById('title');
-        const contentInput = document.getElementById('content');
-        const sourceUrlInput = document.getElementById('sourceUrl');
+        const elements = {
+            btnConnect: document.getElementById('btnConnect'),
+            walletStatus: document.getElementById('walletStatus'),
+            walletAddress: document.getElementById('walletAddress'),
+            adminPanel: document.getElementById('adminPanel'),
+            articlesGrid: document.getElementById('articlesGrid'),
+            articleForm: document.getElementById('articleForm'),
+            btnPublish: document.getElementById('btnPublish'),
+            btnCancel: document.getElementById('btnCancel'),
+            title: document.getElementById('title'),
+            content: document.getElementById('content'),
+            sourceUrl: document.getElementById('sourceUrl')
+        };
 
         // Event Listeners
-        btnPost.addEventListener('click', togglePostForm);
-        btnMenu.addEventListener('click', () => {
-            navbarActions.classList.toggle('mobile-menu');
-        });
-        btnPublish.addEventListener('click', publishArticle);
-        btnCancel.addEventListener('click', togglePostForm);
+        elements.btnConnect.addEventListener('click', connectWallet);
+        elements.btnPublish.addEventListener('click', publishArticle);
+        elements.btnCancel.addEventListener('click', clearForm);
 
         // Initialize
-        async function init() {
-            await connectWallet();
-            await loadArticles();
+        window.addEventListener('load', () => {
+            checkWalletConnection();
+            loadArticles();
+        });
+
+        async function checkWalletConnection() {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                    if (accounts.length > 0) {
+                        state.account = accounts[0];
+                        updateUI();
+                    }
+                } catch (error) {
+                    console.error('Wallet check failed:', error);
+                }
+            }
         }
 
         async function connectWallet() {
-            if (typeof window.ethereum !== 'undefined') {
-                try {
-                    const accounts = await window.ethereum.request({
-                        method: 'eth_requestAccounts'
-                    });
-                    account = accounts[0];
-                    web3 = new Web3(window.ethereum);
-                    contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+            if (typeof window.ethereum === 'undefined') {
+                showToast('Please install MetaMask');
+                return;
+            }
 
-                    updateWalletInfo();
-                    checkAdmin();
-                    switchToMonadChain();
+            try {
+                const accounts = await window.ethereum.request({
+                    method: 'eth_requestAccounts'
+                });
 
-                    window.ethereum.on('accountsChanged', () => {
-                        location.reload();
-                    });
-                } catch (error) {
-                    console.error('Connection failed:', error);
-                }
-            } else {
-                walletInfo.textContent = 'MetaMask not installed';
+                state.account = accounts[0];
+                state.web3 = new Web3(window.ethereum);
+                state.contract = new state.web3.eth.Contract(CONTRACT_ABI, CONFIG.CONTRACT_ADDRESS);
+
+                await switchChain();
+                updateUI();
+                loadArticles();
+
+                window.ethereum.on('accountsChanged', (accounts) => {
+                    if (accounts.length === 0) {
+                        state.account = null;
+                        state.isAdmin = false;
+                        updateUI();
+                    }
+                });
+            } catch (error) {
+                console.error('Connection failed:', error);
+                showToast('Connection failed');
             }
         }
 
-        function updateWalletInfo() {
-            if (account) {
-                walletInfo.textContent = `${account.substring(0, 6)}...${account.substring(account.length - 4)}`;
-            }
-        }
-
-        function checkAdmin() {
-            if (account && account.toLowerCase() === ADMIN_ADDRESS.toLowerCase()) {
-                isAdmin = true;
-                btnPost.style.display = 'block';
-            } else {
-                isAdmin = false;
-                btnPost.style.display = 'none';
-            }
-        }
-
-        async function switchToMonadChain() {
+        async function switchChain() {
             try {
                 await window.ethereum.request({
                     method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: '0x' + CHAIN_ID.toString(16) }]
+                    params: [{ chainId: '0x' + CONFIG.CHAIN_ID.toString(16) }]
                 });
             } catch (switchError) {
                 if (switchError.code === 4902) {
@@ -604,83 +694,99 @@
                         await window.ethereum.request({
                             method: 'wallet_addEthereumChain',
                             params: [{
-                                chainId: '0x' + CHAIN_ID.toString(16),
+                                chainId: '0x' + CONFIG.CHAIN_ID.toString(16),
                                 chainName: 'Monad Testnet',
-                                rpcUrls: [RPC_URL],
+                                rpcUrls: [CONFIG.RPC_URL],
                                 nativeCurrency: { name: 'Monad', symbol: 'MON', decimals: 18 }
                             }]
                         });
                     } catch (error) {
-                        console.error('Failed to add chain:', error);
+                        console.error('Chain addition failed:', error);
                     }
                 }
             }
         }
 
-        function togglePostForm() {
-            formContainer.classList.toggle('hidden');
-            if (!formContainer.classList.contains('hidden')) {
-                titleInput.focus();
+        function updateUI() {
+            if (state.account) {
+                state.isAdmin = state.account.toLowerCase() === CONFIG.ADMIN_ADDRESS.toLowerCase();
+                
+                elements.btnConnect.style.display = 'none';
+                elements.walletStatus.style.display = 'flex';
+                elements.walletAddress.textContent = `${state.account.slice(0, 6)}...${state.account.slice(-4)}`;
+                
+                if (state.isAdmin) {
+                    elements.adminPanel.classList.add('show');
+                } else {
+                    elements.adminPanel.classList.remove('show');
+                }
+            } else {
+                elements.btnConnect.style.display = 'block';
+                elements.walletStatus.style.display = 'none';
+                elements.adminPanel.classList.remove('show');
             }
         }
 
         async function publishArticle(e) {
             e.preventDefault();
 
-            if (!isAdmin) {
-                alert('Only admin can publish articles');
+            if (!state.isAdmin) {
+                showToast('Only admin can publish articles');
                 return;
             }
 
-            const title = titleInput.value.trim();
-            const content = contentInput.value.trim();
-            const sourceUrl = sourceUrlInput.value.trim();
+            const title = elements.title.value.trim();
+            const content = elements.content.value.trim();
+            const sourceUrl = elements.sourceUrl.value.trim();
 
             if (!title || !content) {
-                alert('Please fill in all required fields');
+                showToast('Please fill in required fields');
                 return;
             }
 
-            btnPublish.disabled = true;
-            btnPublish.innerHTML = '<span class="loading"><span class="spinner"></span> Publishing...</span>';
+            elements.btnPublish.disabled = true;
+            elements.btnPublish.innerHTML = '<span class="loading"><span class="spinner"></span> Publishing...</span>';
 
             try {
-                const tx = await contract.methods.publishArticle(title, content, sourceUrl).send({
-                    from: account
+                const tx = await state.contract.methods.publishArticle(title, content, sourceUrl).send({
+                    from: state.account
                 });
 
-                alert('Article published successfully!');
-                articleForm.reset();
-                togglePostForm();
+                showToast('Article published successfully! 🎉');
+                clearForm();
                 await loadArticles();
             } catch (error) {
                 console.error('Publish error:', error);
-                alert('Error publishing article: ' + (error.message || 'Unknown error'));
+                showToast('Error publishing article');
             } finally {
-                btnPublish.disabled = false;
-                btnPublish.textContent = 'Publish via Blockchain';
+                elements.btnPublish.disabled = false;
+                elements.btnPublish.textContent = 'Publish to Blockchain';
             }
+        }
+
+        function clearForm() {
+            elements.articleForm.reset();
         }
 
         async function loadArticles() {
             try {
-                if (!contract) return;
+                if (!state.contract) return;
 
-                const totalArticles = await contract.methods.getTotalArticles().call();
-                const limit = Math.min(parseInt(totalArticles), 50);
+                const total = await state.contract.methods.getTotalArticles().call();
+                const limit = Math.min(parseInt(total), 50);
 
                 if (limit === 0) {
-                    articlesFeed.innerHTML = '<div class="empty-state"><p>No articles published yet. Check back soon!</p></div>';
+                    elements.articlesGrid.innerHTML = '<div class="empty-state"><p>🚀 No articles yet. Stay tuned for updates!</p></div>';
                     return;
                 }
 
-                const articleIds = await contract.methods.getLatestArticleIds(limit).call();
-                articles = [];
+                const ids = await state.contract.methods.getLatestArticleIds(limit).call();
+                state.articles = [];
 
-                for (let id of articleIds) {
+                for (let id of ids) {
                     try {
-                        const article = await contract.methods.getArticle(id).call();
-                        articles.push({
+                        const article = await state.contract.methods.getArticle(id).call();
+                        state.articles.push({
                             id: parseInt(id),
                             title: article.title,
                             content: article.content,
@@ -700,51 +806,45 @@
         }
 
         function renderArticles() {
-            if (articles.length === 0) {
-                articlesFeed.innerHTML = '<div class="empty-state"><p>No articles published yet. Check back soon!</p></div>';
+            if (state.articles.length === 0) {
+                elements.articlesGrid.innerHTML = '<div class="empty-state"><p>🚀 No articles yet. Stay tuned for updates!</p></div>';
                 return;
             }
 
-            articlesFeed.innerHTML = articles.map(article => `
+            elements.articlesGrid.innerHTML = state.articles.map(article => `
                 <div class="article-card">
                     <div class="article-header">
-                        <div class="article-title-section">
+                        <div>
                             <h3 class="article-title">${escapeHtml(article.title)}</h3>
-                            <p class="article-date">${formatDate(article.timestamp)}</p>
+                            <p class="article-date">📅 ${formatDate(article.timestamp)}</p>
                         </div>
-                        <button class="article-share" onclick="shareToTwitter('${escapeHtml(article.title)}', '${window.location.href}')" title="Share to Twitter">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="18" cy="5" r="3"></circle>
-                                <line x1="12" y1="19" x2="9" y2="6"></line>
-                                <path d="M6 12a6 6 0 0 0 9 5.13"></path>
-                            </svg>
-                        </button>
                     </div>
                     <p class="article-content">${escapeHtml(article.content)}</p>
-                    ${article.sourceUrl ? `
-                        <a href="${escapeHtml(article.sourceUrl)}" target="_blank" rel="noopener noreferrer" class="article-source">
-                            Read Source
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                                <polyline points="15 3 21 3 21 9"></polyline>
-                                <line x1="10" y1="14" x2="21" y2="3"></line>
-                            </svg>
-                        </a>
-                    ` : ''}
+                    <div class="article-footer">
+                        ${article.sourceUrl ? `
+                            <a href="${escapeHtml(article.sourceUrl)}" target="_blank" rel="noopener noreferrer" class="article-source">
+                                🔗 Read Source →
+                            </a>
+                        ` : '<span></span>'}
+                        <button class="btn-share" onclick="shareArticle('${escapeHtml(article.title)}')">
+                            𝕏 Share
+                        </button>
+                    </div>
                 </div>
             `).join('');
         }
 
-        function shareToTwitter(title, url) {
+        function shareArticle(title) {
             const templates = [
-                `🚀 Breaking News on Monad Ecosystem: "${title}" - Stay updated with the latest developments! Read more on MONAD NEWS 👉`,
-                `📰 Essential Read: "${title}" - Get the latest insights from the Monad community! Check it out now 👉`,
-                `💡 New Update: "${title}" - Don't miss this important Monad news! Learn more here 👉`,
-                `🔥 Hot Topic: "${title}" - Latest from the Monad Ecosystem. Read the full story 👉`
+                `🚀 Breaking: "${title}" - Latest from Monad Ecosystem! Read on MONAD NEWS →`,
+                `📰 Essential Read: "${title}" - Don't miss this! Updates from Monad →`,
+                `💡 New: "${title}" - Important Monad ecosystem news! Check it out →`,
+                `🔥 Hot Topic: "${title}" - Latest from Monad. Read the story →`
             ];
 
-            const randomTemplate = templates[Math.floor(Math.random() * templates.length)];
-            const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(randomTemplate)}&url=${encodeURIComponent(url)}`;
+            const template = templates[Math.floor(Math.random() * templates.length)];
+            const url = window.location.href;
+            const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(template)}&url=${encodeURIComponent(url)}`;
             window.open(tweetUrl, '_blank');
         }
 
@@ -752,7 +852,7 @@
             const date = new Date(timestamp * 1000);
             return date.toLocaleDateString('en-US', {
                 year: 'numeric',
-                month: 'long',
+                month: 'short',
                 day: 'numeric'
             });
         }
@@ -763,8 +863,16 @@
             return div.innerHTML;
         }
 
-        // Start
-        init();
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Make shareArticle globally accessible
+        window.shareArticle = shareArticle;
     </script>
 </body>
 </html>
