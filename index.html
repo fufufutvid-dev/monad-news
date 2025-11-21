@@ -3,464 +3,768 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MONAD NEWS - Blockchain-Verified Ecosystem Updates</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <title>MONAD NEWS - Decentralized News Platform</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3.js/1.10.0/web3.min.js"></script>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #06b6d4;
+            --secondary: #2563eb;
+            --dark: #0f172a;
+            --darker: #020617;
+            --slate-900: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --slate-400: #94a3b8;
+            --slate-300: #cbd5e1;
+            --white: #ffffff;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
         body {
-            background: linear-gradient(to bottom right, #020617, #581c87, #020617);
+            background: linear-gradient(to bottom right, #0f172a, #1a1a2e, #0f172a);
+            color: var(--white);
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
-        .glass-effect {
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(40px);
+
+        .navbar {
+            border-bottom: 1px solid var(--slate-800);
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(16px);
+            position: sticky;
+            top: 0;
+            z-index: 50;
         }
-        .gradient-text {
-            background: linear-gradient(to right, #c084fc, #f9a8d4, #c084fc);
+
+        .navbar-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .navbar-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.25rem;
+        }
+
+        .navbar-title {
+            font-size: 1.75rem;
+            font-weight: bold;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        .article-card {
+
+        .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .wallet-info {
+            font-size: 0.875rem;
+            color: var(--slate-400);
+        }
+
+        .btn-post {
+            padding: 0.5rem 1.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            color: var(--white);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+        }
+
+        .btn-post:hover {
+            box-shadow: 0 8px 25px rgba(6, 182, 212, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-post:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-menu {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--white);
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            flex: 1;
+            width: 100%;
+        }
+
+        .form-container {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--slate-800);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            backdrop-filter: blur(8px);
+            margin-bottom: 2rem;
+        }
+
+        .form-container h2 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            color: var(--slate-300);
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--slate-800);
+            border: 1px solid var(--slate-700);
+            border-radius: 0.5rem;
+            color: var(--white);
+            font-family: inherit;
+            font-size: 1rem;
             transition: all 0.3s ease;
         }
-        .article-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(168, 85, 247, 0.2);
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
         }
-        .line-clamp-3 {
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn-primary {
+            flex: 1;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            color: var(--white);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            box-shadow: 0 8px 25px rgba(6, 182, 212, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            padding: 0.75rem 1.5rem;
+            background: var(--slate-800);
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            color: var(--white);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: var(--slate-700);
+        }
+
+        .articles-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .article-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--slate-800);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+        }
+
+        .article-card:hover {
+            border-color: rgba(6, 182, 212, 0.5);
+        }
+
+        .article-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            gap: 1rem;
+        }
+
+        .article-title-section {
+            flex: 1;
+        }
+
+        .article-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .article-card:hover .article-title {
+            color: var(--primary);
+        }
+
+        .article-date {
+            font-size: 0.875rem;
+            color: var(--slate-400);
+        }
+
+        .article-share {
+            padding: 0.75rem;
+            background: var(--slate-800);
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            color: var(--white);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 48px;
+            height: 48px;
+        }
+
+        .article-share:hover {
+            background: rgba(6, 182, 212, 0.2);
+        }
+
+        .article-content {
+            color: var(--slate-300);
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .article-source {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .article-source:hover {
+            color: #00d4ff;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 5rem 1rem;
+            color: var(--slate-400);
+        }
+
+        .empty-state p {
+            font-size: 1.25rem;
+        }
+
+        .footer {
+            border-top: 1px solid var(--slate-800);
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(16px);
+            margin-top: auto;
+        }
+
+        .footer-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .footer-text {
+            color: var(--slate-400);
+            font-size: 0.875rem;
+        }
+
+        .footer-credit {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            font-size: 0.875rem;
+        }
+
+        .footer-credit:hover {
+            color: #00d4ff;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .loading {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(6, 182, 212, 0.3);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .navbar-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-menu {
+                display: block;
+            }
+
+            .navbar-actions .btn-post {
+                display: none;
+            }
+
+            .navbar-actions.mobile-menu .btn-post {
+                display: block;
+                width: 100%;
+            }
+
+            .article-header {
+                flex-direction: column;
+            }
+
+            .article-share {
+                width: 100%;
+            }
+
+            .footer-content {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="fixed top-0 w-full glass-effect border-b border-purple-500/20 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-20">
-                <div class="flex items-center space-x-3">
-                    <div class="relative">
-                        <div class="absolute inset-0 bg-purple-600 blur-xl opacity-60"></div>
-                        <svg class="relative w-10 h-10 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <h1 class="text-3xl font-bold gradient-text">MONAD NEWS</h1>
-                        <p class="text-xs text-purple-300/60">Blockchain-Verified Ecosystem Updates</p>
-                    </div>
-                </div>
-
-                <div class="hidden md:flex items-center space-x-4">
-                    <button id="connectWalletBtn" class="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg shadow-purple-500/50 font-semibold">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-                        </svg>
-                        <span>Connect Wallet</span>
-                    </button>
-                    <div id="walletInfo" class="hidden items-center space-x-3">
-                        <div class="px-4 py-2 bg-purple-900/30 rounded-xl border border-purple-500/30">
-                            <p id="walletAddressDisplay" class="text-sm text-purple-300"></p>
-                        </div>
-                        <button id="newArticleBtn" class="hidden items-center space-x-2 px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 rounded-xl hover:from-pink-700 hover:to-purple-700 transition-all">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                            </svg>
-                            <span>New Article</span>
-                        </button>
-                    </div>
-                </div>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">
+                <div class="navbar-logo">M</div>
+                <span class="navbar-title">MONAD NEWS</span>
             </div>
+            <div class="navbar-actions" id="navbarActions">
+                <div class="wallet-info" id="walletInfo">Not connected</div>
+                <button class="btn-post" id="btnPost">+ Post Article</button>
+            </div>
+            <button class="btn-menu" id="btnMenu">☰</button>
         </div>
     </nav>
 
-    <!-- Admin Panel Modal -->
-    <div id="adminPanel" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-gradient-to-br from-slate-900 to-purple-900/50 rounded-2xl border border-purple-500/30 max-w-2xl w-full p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-purple-300">Publish New Article</h2>
-                <button id="closeAdminPanel" class="text-purple-300 hover:text-purple-100">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-purple-300 mb-2">Article Title</label>
-                    <input type="text" id="articleTitle" class="w-full px-4 py-3 bg-slate-900/50 border border-purple-500/30 rounded-xl text-white focus:outline-none focus:border-purple-500" placeholder="Enter article title...">
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Post Form -->
+        <div class="form-container hidden" id="formContainer">
+            <h2>Publish New Article</h2>
+            <form id="articleForm">
+                <div class="form-group">
+                    <label for="title">Article Title</label>
+                    <input type="text" id="title" placeholder="Enter article title" required>
                 </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-purple-300 mb-2">Content</label>
-                    <textarea id="articleContent" class="w-full px-4 py-3 bg-slate-900/50 border border-purple-500/30 rounded-xl text-white focus:outline-none focus:border-purple-500 h-40 resize-none" placeholder="Write your article content..."></textarea>
+                <div class="form-group">
+                    <label for="content">Article Content</label>
+                    <textarea id="content" placeholder="Enter article content" required></textarea>
                 </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-purple-300 mb-2">Source URL (Optional)</label>
-                    <input type="url" id="articleSource" class="w-full px-4 py-3 bg-slate-900/50 border border-purple-500/30 rounded-xl text-white focus:outline-none focus:border-purple-500" placeholder="https://...">
+                <div class="form-group">
+                    <label for="sourceUrl">Source URL</label>
+                    <input type="url" id="sourceUrl" placeholder="https://example.com">
                 </div>
-
-                <div id="txStatusDiv" class="hidden p-4 rounded-xl flex items-center space-x-3">
-                    <svg id="txStatusIcon" class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <span id="txStatusText" class="text-sm"></span>
+                <div class="form-actions">
+                    <button type="button" class="btn-primary" id="btnPublish">Publish via Blockchain</button>
+                    <button type="button" class="btn-secondary" id="btnCancel">Cancel</button>
                 </div>
-
-                <button id="publishBtn" class="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 font-semibold text-lg shadow-lg shadow-purple-500/50">
-                    Publish via Monad Testnet
-                </button>
-
-                <p class="text-xs text-purple-300/60 text-center">Transaction will be recorded on Monad blockchain</p>
-            </div>
+            </form>
         </div>
-    </div>
 
-    <!-- Hero Section -->
-    <div class="pt-32 pb-16 px-4">
-        <div class="max-w-7xl mx-auto text-center">
-            <div class="relative inline-block mb-6">
-                <div class="absolute inset-0 bg-purple-600 blur-3xl opacity-30"></div>
-                <svg class="relative w-16 h-16 mx-auto text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                </svg>
+        <!-- Articles Feed -->
+        <div class="articles-grid" id="articlesFeed">
+            <div class="empty-state">
+                <p>No articles published yet. Check back soon!</p>
             </div>
-            <h2 class="text-5xl md:text-6xl font-bold mb-6 gradient-text">
-                Latest Monad Ecosystem Updates
-            </h2>
-            <p class="text-xl text-purple-300/80 max-w-3xl mx-auto">
-                Stay informed with blockchain-verified news and developments from the Monad ecosystem. All articles are published on-chain for transparency.
-            </p>
-        </div>
-    </div>
-
-    <!-- Articles Grid -->
-    <div class="max-w-7xl mx-auto px-4 pb-20">
-        <div id="articlesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Articles will be loaded here -->
-        </div>
-        <div id="noArticles" class="text-center py-20">
-            <svg class="w-20 h-20 mx-auto text-purple-400/30 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            <p class="text-xl text-purple-300/60">No articles published yet</p>
-            <p class="text-sm text-purple-300/40 mt-2">Check back soon for updates</p>
         </div>
     </div>
 
     <!-- Footer -->
-    <footer class="border-t border-purple-500/20 glass-effect">
-        <div class="max-w-7xl mx-auto px-4 py-8">
-            <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-                <div class="text-center md:text-left">
-                    <p class="text-purple-300/80 font-semibold mb-1">MONAD NEWS</p>
-                    <p class="text-sm text-purple-300/40">Blockchain-verified ecosystem updates</p>
-                </div>
-                
-                <div class="flex items-center space-x-2 text-sm text-purple-300/60">
-                    <span>Created by</span>
-                    <a href="https://x.com/ega_2ez4crypto" target="_blank" rel="noopener noreferrer" class="text-purple-400 hover:text-purple-300 transition-colors font-semibold flex items-center space-x-1">
-                        <span>@ega_2ez4crypto</span>
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                        </svg>
-                    </a>
-                </div>
-            </div>
-            
-            <div class="mt-6 pt-6 border-t border-purple-500/10 text-center">
-                <p class="text-xs text-purple-300/40">
-                    All articles are published on Monad Testnet • Powered by Web3
-                </p>
-            </div>
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="footer-text">MONAD NEWS © 2025 - Decentralized News Platform</p>
+            <a href="https://x.com/ega_2ez4crypto" target="_blank" rel="noopener noreferrer" class="footer-credit">
+                Created by @ega_2ez4crypto
+            </a>
         </div>
     </footer>
 
     <script>
+        // Configuration
+        const CONTRACT_ADDRESS = '0xa20e64fDB33D36A82311a3CE3fC01950A440D777';
         const ADMIN_ADDRESS = '0x287aBD1674f25C524503cDA2f1FD42EbECC401eA';
-        const CONTRACT_ADDRESS = '0x9af2CAb96e7CdCf5f8d78a8b6E923a5F3d183A4c';
-        const MONAD_CHAIN_ID = '0x279F';
+        const CHAIN_ID = 10143;
+        const RPC_URL = 'https://testnet-rpc.monad.xyz';
 
-        let walletAddress = '';
-        let isAdmin = false;
-
-        // Load articles from storage
-        async function loadArticles() {
-            const container = document.getElementById('articlesContainer');
-            const noArticles = document.getElementById('noArticles');
-            
-            try {
-                const stored = await window.storage.list('article:', true);
-                if (stored && stored.keys && stored.keys.length > 0) {
-                    const articles = [];
-                    for (const key of stored.keys) {
-                        try {
-                            const result = await window.storage.get(key, true);
-                            if (result) {
-                                articles.push(JSON.parse(result.value));
-                            }
-                        } catch (e) {
-                            console.error('Error loading article:', e);
-                        }
-                    }
-                    
-                    articles.sort((a, b) => b.timestamp - a.timestamp);
-                    
-                    if (articles.length > 0) {
-                        noArticles.classList.add('hidden');
-                        container.innerHTML = articles.map(article => createArticleCard(article)).join('');
-                    } else {
-                        noArticles.classList.remove('hidden');
-                    }
-                } else {
-                    noArticles.classList.remove('hidden');
-                }
-            } catch (error) {
-                console.log('No articles yet:', error);
-                noArticles.classList.remove('hidden');
+        const CONTRACT_ABI = [
+            {
+                inputs: [{ name: '_title', type: 'string' }, { name: '_content', type: 'string' }, { name: '_sourceUrl', type: 'string' }],
+                name: 'publishArticle',
+                outputs: [],
+                stateMutability: 'nonpayable',
+                type: 'function'
+            },
+            {
+                inputs: [{ name: '_limit', type: 'uint256' }],
+                name: 'getLatestArticleIds',
+                outputs: [{ name: '', type: 'uint256[]' }],
+                stateMutability: 'view',
+                type: 'function'
+            },
+            {
+                inputs: [{ name: '_id', type: 'uint256' }],
+                name: 'getArticle',
+                outputs: [
+                    { name: 'id', type: 'uint256' },
+                    { name: 'title', type: 'string' },
+                    { name: 'content', type: 'string' },
+                    { name: 'sourceUrl', type: 'string' },
+                    { name: 'timestamp', type: 'uint256' },
+                    { name: 'author', type: 'address' }
+                ],
+                stateMutability: 'view',
+                type: 'function'
+            },
+            {
+                inputs: [],
+                name: 'getTotalArticles',
+                outputs: [{ name: '', type: 'uint256' }],
+                stateMutability: 'view',
+                type: 'function'
             }
-        }
+        ];
 
-        function createArticleCard(article) {
-            const date = new Date(article.timestamp).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+        // State
+        let account = null;
+        let isAdmin = false;
+        let articles = [];
+        let web3 = null;
+        let contract = null;
 
-            return `
-                <div class="article-card bg-gradient-to-br from-slate-900/80 to-purple-900/30 rounded-2xl border border-purple-500/20 hover:border-purple-500/50 overflow-hidden shadow-xl">
-                    <div class="p-6">
-                        <div class="flex items-center space-x-2 text-sm text-purple-300/60 mb-4">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
-                            <span>${date}</span>
-                        </div>
-                        
-                        <h3 class="text-xl font-bold text-purple-100 mb-3">${article.title}</h3>
-                        
-                        <p class="text-purple-300/80 mb-4 line-clamp-3">${article.content}</p>
-                        
-                        <div class="flex items-center justify-between pt-4 border-t border-purple-500/20">
-                            <div class="flex items-center space-x-3">
-                                ${article.sourceUrl ? `
-                                    <a href="${article.sourceUrl}" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-1 text-sm text-purple-400 hover:text-purple-300 transition-colors">
-                                        <span>Source</span>
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                        </svg>
-                                    </a>
-                                ` : ''}
-                                
-                                <button onclick="shareToTwitter('${article.title}', '${article.id}')" class="flex items-center space-x-1 text-sm text-purple-400 hover:text-purple-300 transition-colors">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
-                                    </svg>
-                                    <span>Share</span>
-                                </button>
-                            </div>
-                            
-                            ${article.txHash ? `
-                                <a href="https://explorer.monad.xyz/tx/${article.txHash}" target="_blank" rel="noopener noreferrer" class="text-xs text-purple-400/60 hover:text-purple-300 transition-colors" title="View on Monad Explorer">
-                                    On-chain ✓
-                                </a>
-                            ` : ''}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
+        // DOM Elements
+        const walletInfo = document.getElementById('walletInfo');
+        const btnPost = document.getElementById('btnPost');
+        const btnMenu = document.getElementById('btnMenu');
+        const navbarActions = document.getElementById('navbarActions');
+        const formContainer = document.getElementById('formContainer');
+        const articlesFeed = document.getElementById('articlesFeed');
+        const articleForm = document.getElementById('articleForm');
+        const btnPublish = document.getElementById('btnPublish');
+        const btnCancel = document.getElementById('btnCancel');
+        const titleInput = document.getElementById('title');
+        const contentInput = document.getElementById('content');
+        const sourceUrlInput = document.getElementById('sourceUrl');
 
-        function shareToTwitter(title, articleId) {
-            const websiteUrl = window.location.href.split('#')[0];
-            const articleUrl = `${websiteUrl}#article-${articleId}`;
-            
-            const tweetTemplates = [
-                `🚀 Breaking News in Monad Ecosystem!\n\n"${title}"\n\n✨ Read the full story on MONAD NEWS 👇\n${articleUrl}\n\n#Monad #MonadNews #Blockchain $MON`,
-                `📰 Just dropped on MONAD NEWS!\n\n${title}\n\n🔥 This is huge for the Monad ecosystem!\n\nRead more: ${articleUrl}\n\n#MonadEcosystem #Web3 #Crypto`,
-                `⚡ Latest Update from Monad!\n\n"${title}"\n\n🎯 Stay ahead of the curve with MONAD NEWS\n\n👉 ${articleUrl}\n\n#Monad #CryptoNews #DeFi`,
-                `🌟 Monad Community Alert!\n\n${title}\n\n📊 Verified on-chain news you can trust\n\nCheck it out: ${articleUrl}\n\n#MonadNetwork #BlockchainNews`,
-                `💎 Don't miss this Monad update!\n\n"${title}"\n\n🔗 Read the full article on MONAD NEWS\n${articleUrl}\n\n#Monad #CryptoTwitter #Web3News`
-            ];
-            
-            const randomTemplate = tweetTemplates[Math.floor(Math.random() * tweetTemplates.length)];
-            const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(randomTemplate)}`;
-            
-            window.open(tweetUrl, '_blank', 'width=550,height=420');
+        // Event Listeners
+        btnPost.addEventListener('click', togglePostForm);
+        btnMenu.addEventListener('click', () => {
+            navbarActions.classList.toggle('mobile-menu');
+        });
+        btnPublish.addEventListener('click', publishArticle);
+        btnCancel.addEventListener('click', togglePostForm);
+
+        // Initialize
+        async function init() {
+            await connectWallet();
+            await loadArticles();
         }
 
         async function connectWallet() {
-            if (typeof window.ethereum === 'undefined') {
-                alert('Please install MetaMask or another Web3 wallet');
-                return;
-            }
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    const accounts = await window.ethereum.request({
+                        method: 'eth_requestAccounts'
+                    });
+                    account = accounts[0];
+                    web3 = new Web3(window.ethereum);
+                    contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
 
+                    updateWalletInfo();
+                    checkAdmin();
+                    switchToMonadChain();
+
+                    window.ethereum.on('accountsChanged', () => {
+                        location.reload();
+                    });
+                } catch (error) {
+                    console.error('Connection failed:', error);
+                }
+            } else {
+                walletInfo.textContent = 'MetaMask not installed';
+            }
+        }
+
+        function updateWalletInfo() {
+            if (account) {
+                walletInfo.textContent = `${account.substring(0, 6)}...${account.substring(account.length - 4)}`;
+            }
+        }
+
+        function checkAdmin() {
+            if (account && account.toLowerCase() === ADMIN_ADDRESS.toLowerCase()) {
+                isAdmin = true;
+                btnPost.style.display = 'block';
+            } else {
+                isAdmin = false;
+                btnPost.style.display = 'none';
+            }
+        }
+
+        async function switchToMonadChain() {
             try {
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-                
-                if (chainId !== MONAD_CHAIN_ID) {
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: '0x' + CHAIN_ID.toString(16) }]
+                });
+            } catch (switchError) {
+                if (switchError.code === 4902) {
                     try {
                         await window.ethereum.request({
-                            method: 'wallet_switchEthereumChain',
-                            params: [{ chainId: MONAD_CHAIN_ID }],
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId: '0x' + CHAIN_ID.toString(16),
+                                chainName: 'Monad Testnet',
+                                rpcUrls: [RPC_URL],
+                                nativeCurrency: { name: 'Monad', symbol: 'MON', decimals: 18 }
+                            }]
                         });
-                    } catch (switchError) {
-                        if (switchError.code === 4902) {
-                            await window.ethereum.request({
-                                method: 'wallet_addEthereumChain',
-                                params: [{
-                                    chainId: MONAD_CHAIN_ID,
-                                    chainName: 'Monad Testnet',
-                                    nativeCurrency: { name: 'Monad', symbol: 'MON', decimals: 18 },
-                                    rpcUrls: ['https://testnet-rpc.monad.xyz'],
-                                    blockExplorerUrls: ['https://explorer.monad.xyz']
-                                }]
-                            });
-                        }
+                    } catch (error) {
+                        console.error('Failed to add chain:', error);
                     }
                 }
-                
-                walletAddress = accounts[0];
-                document.getElementById('connectWalletBtn').classList.add('hidden');
-                document.getElementById('walletInfo').classList.remove('hidden');
-                document.getElementById('walletInfo').classList.add('flex');
-                document.getElementById('walletAddressDisplay').textContent = 
-                    `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
-                
-                if (walletAddress.toLowerCase() === ADMIN_ADDRESS.toLowerCase()) {
-                    isAdmin = true;
-                    document.getElementById('newArticleBtn').classList.remove('hidden');
-                    document.getElementById('newArticleBtn').classList.add('flex');
-                }
-            } catch (error) {
-                console.error('Error connecting wallet:', error);
-                alert('Failed to connect wallet');
             }
         }
 
-        async function publishArticle() {
-            const title = document.getElementById('articleTitle').value.trim();
-            const content = document.getElementById('articleContent').value.trim();
-            const sourceUrl = document.getElementById('articleSource').value.trim();
+        function togglePostForm() {
+            formContainer.classList.toggle('hidden');
+            if (!formContainer.classList.contains('hidden')) {
+                titleInput.focus();
+            }
+        }
 
-            if (!title || !content) {
-                alert('Please fill in title and content');
+        async function publishArticle(e) {
+            e.preventDefault();
+
+            if (!isAdmin) {
+                alert('Only admin can publish articles');
                 return;
             }
 
-            const statusDiv = document.getElementById('txStatusDiv');
-            const statusText = document.getElementById('txStatusText');
-            const publishBtn = document.getElementById('publishBtn');
+            const title = titleInput.value.trim();
+            const content = contentInput.value.trim();
+            const sourceUrl = sourceUrlInput.value.trim();
 
-            statusDiv.classList.remove('hidden');
-            statusDiv.className = 'p-4 rounded-xl flex items-center space-x-3 bg-purple-900/30 border border-purple-500/30';
-            statusText.className = 'text-sm text-purple-300';
-            statusText.textContent = 'Preparing transaction...';
-            publishBtn.disabled = true;
+            if (!title || !content) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            btnPublish.disabled = true;
+            btnPublish.innerHTML = '<span class="loading"><span class="spinner"></span> Publishing...</span>';
 
             try {
-                // Encode function call data manually
-                const iface = new ethers.utils.Interface([
-                    "function publishArticle(string _title, string _content, string _sourceUrl)"
-                ]);
-                
-                const data = iface.encodeFunctionData("publishArticle", [title, content, sourceUrl]);
-
-                statusText.textContent = 'Please sign the transaction in your wallet...';
-                
-                // Send transaction using eth_sendTransaction
-                const txHash = await window.ethereum.request({
-                    method: 'eth_sendTransaction',
-                    params: [{
-                        from: walletAddress,
-                        to: CONTRACT_ADDRESS,
-                        data: data,
-                        gas: '0x493E0', // 300000 gas limit
-                    }]
+                const tx = await contract.methods.publishArticle(title, content, sourceUrl).send({
+                    from: account
                 });
-                
-                statusText.textContent = 'Confirming transaction on Monad Testnet...';
-                
-                // Wait for transaction confirmation
-                let receipt = null;
-                let attempts = 0;
-                while (!receipt && attempts < 60) {
-                    try {
-                        receipt = await window.ethereum.request({
-                            method: 'eth_getTransactionReceipt',
-                            params: [txHash]
-                        });
-                        if (!receipt) {
-                            await new Promise(resolve => setTimeout(resolve, 2000));
-                            attempts++;
-                        }
-                    } catch (e) {
-                        await new Promise(resolve => setTimeout(resolve, 2000));
-                        attempts++;
-                    }
-                }
 
-                if (!receipt) {
-                    throw new Error('Transaction timeout - please check explorer');
-                }
-
-                const article = {
-                    id: `article:${Date.now()}`,
-                    title: title,
-                    content: content,
-                    sourceUrl: sourceUrl,
-                    timestamp: Date.now(),
-                    txHash: txHash,
-                    author: walletAddress
-                };
-
-                await window.storage.set(article.id, JSON.stringify(article), true);
-                
-                statusDiv.className = 'p-4 rounded-xl flex items-center space-x-3 bg-green-900/30 border border-green-500/30';
-                statusText.className = 'text-sm text-green-300';
-                statusText.textContent = 'Article published successfully!';
-
-                document.getElementById('articleTitle').value = '';
-                document.getElementById('articleContent').value = '';
-                document.getElementById('articleSource').value = '';
-
-                setTimeout(() => {
-                    document.getElementById('adminPanel').classList.add('hidden');
-                    statusDiv.classList.add('hidden');
-                    publishBtn.disabled = false;
-                    loadArticles();
-                }, 2000);
-
+                alert('Article published successfully!');
+                articleForm.reset();
+                togglePostForm();
+                await loadArticles();
             } catch (error) {
-                console.error('Error publishing:', error);
-                statusDiv.className = 'p-4 rounded-xl flex items-center space-x-3 bg-red-900/30 border border-red-500/30';
-                statusText.className = 'text-sm text-red-300';
-                statusText.textContent = 'Transaction failed: ' + (error.message || 'Unknown error');
-                publishBtn.disabled = false;
+                console.error('Publish error:', error);
+                alert('Error publishing article: ' + (error.message || 'Unknown error'));
+            } finally {
+                btnPublish.disabled = false;
+                btnPublish.textContent = 'Publish via Blockchain';
             }
         }
 
-        // Event Listeners
-        document.getElementById('connectWalletBtn').addEventListener('click', connectWallet);
-        document.getElementById('newArticleBtn').addEventListener('click', () => {
-            document.getElementById('adminPanel').classList.remove('hidden');
-        });
-        document.getElementById('closeAdminPanel').addEventListener('click', () => {
-            document.getElementById('adminPanel').classList.add('hidden');
-        });
-        document.getElementById('publishBtn').addEventListener('click', publishArticle);
+        async function loadArticles() {
+            try {
+                if (!contract) return;
 
-        // Load articles on page load
-        loadArticles();
+                const totalArticles = await contract.methods.getTotalArticles().call();
+                const limit = Math.min(parseInt(totalArticles), 50);
+
+                if (limit === 0) {
+                    articlesFeed.innerHTML = '<div class="empty-state"><p>No articles published yet. Check back soon!</p></div>';
+                    return;
+                }
+
+                const articleIds = await contract.methods.getLatestArticleIds(limit).call();
+                articles = [];
+
+                for (let id of articleIds) {
+                    try {
+                        const article = await contract.methods.getArticle(id).call();
+                        articles.push({
+                            id: parseInt(id),
+                            title: article.title,
+                            content: article.content,
+                            sourceUrl: article.sourceUrl,
+                            timestamp: parseInt(article.timestamp),
+                            author: article.author
+                        });
+                    } catch (error) {
+                        console.error(`Error loading article ${id}:`, error);
+                    }
+                }
+
+                renderArticles();
+            } catch (error) {
+                console.error('Load articles error:', error);
+            }
+        }
+
+        function renderArticles() {
+            if (articles.length === 0) {
+                articlesFeed.innerHTML = '<div class="empty-state"><p>No articles published yet. Check back soon!</p></div>';
+                return;
+            }
+
+            articlesFeed.innerHTML = articles.map(article => `
+                <div class="article-card">
+                    <div class="article-header">
+                        <div class="article-title-section">
+                            <h3 class="article-title">${escapeHtml(article.title)}</h3>
+                            <p class="article-date">${formatDate(article.timestamp)}</p>
+                        </div>
+                        <button class="article-share" onclick="shareToTwitter('${escapeHtml(article.title)}', '${window.location.href}')" title="Share to Twitter">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="18" cy="5" r="3"></circle>
+                                <line x1="12" y1="19" x2="9" y2="6"></line>
+                                <path d="M6 12a6 6 0 0 0 9 5.13"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="article-content">${escapeHtml(article.content)}</p>
+                    ${article.sourceUrl ? `
+                        <a href="${escapeHtml(article.sourceUrl)}" target="_blank" rel="noopener noreferrer" class="article-source">
+                            Read Source
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                <polyline points="15 3 21 3 21 9"></polyline>
+                                <line x1="10" y1="14" x2="21" y2="3"></line>
+                            </svg>
+                        </a>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function shareToTwitter(title, url) {
+            const templates = [
+                `🚀 Breaking News on Monad Ecosystem: "${title}" - Stay updated with the latest developments! Read more on MONAD NEWS 👉`,
+                `📰 Essential Read: "${title}" - Get the latest insights from the Monad community! Check it out now 👉`,
+                `💡 New Update: "${title}" - Don't miss this important Monad news! Learn more here 👉`,
+                `🔥 Hot Topic: "${title}" - Latest from the Monad Ecosystem. Read the full story 👉`
+            ];
+
+            const randomTemplate = templates[Math.floor(Math.random() * templates.length)];
+            const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(randomTemplate)}&url=${encodeURIComponent(url)}`;
+            window.open(tweetUrl, '_blank');
+        }
+
+        function formatDate(timestamp) {
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Start
+        init();
     </script>
 </body>
 </html>
