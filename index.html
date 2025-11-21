@@ -1,542 +1,445 @@
-import React, { useState, useEffect } from 'react';
-import { Globe, TrendingUp, Calendar, ExternalLink, Menu, X, Plus, Wallet, CheckCircle, Clock, Share2 } from 'lucide-react';
-
-const MonadNews = () => {
-  const [articles, setArticles] = useState([]);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [showAdminPanel, setShowAdminPanel] = useState(false);
-  const [walletConnected, setWalletConnected] = useState(false);
-  const [walletAddress, setWalletAddress] = useState('');
-  const [newArticle, setNewArticle] = useState({ title: '', content: '', sourceUrl: '' });
-  const [txStatus, setTxStatus] = useState('');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [ethersLoaded, setEthersLoaded] = useState(false);
-
-  const ADMIN_ADDRESS = '0x287aBD1674f25C524503cDA2f1FD42EbECC401eA';
-  const CONTRACT_ADDRESS = '0x9af2CAb96e7CdCf5f8d78a8b6E923a5F3d183A4c';
-  const RPC_URL = 'https://testnet-rpc.monad.xyz';
-  const MONAD_CHAIN_ID = '0x279F';
-
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js';
-    script.async = true;
-    script.onload = () => setEthersLoaded(true);
-    document.body.appendChild(script);
-    
-    return () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    loadArticles();
-  }, []);
-
-  const loadArticles = async () => {
-    try {
-      const stored = await window.storage.list('article:', true);
-      if (stored && stored.keys) {
-        const articlePromises = stored.keys.map(async (key) => {
-          try {
-            const result = await window.storage.get(key, true);
-            return result ? JSON.parse(result.value) : null;
-          } catch {
-            return null;
-          }
-        });
-        const loadedArticles = (await Promise.all(articlePromises))
-          .filter(a => a !== null)
-          .sort((a, b) => b.timestamp - a.timestamp);
-        setArticles(loadedArticles);
-      }
-    } catch (error) {
-      console.log('No articles yet or error loading:', error);
-    }
-  };
-
-  const connectWallet = async () => {
-    try {
-      if (typeof window.ethereum === 'undefined') {
-        alert('Please install MetaMask or another Web3 wallet');
-        return;
-      }
-
-      const accounts = await window.ethereum.request({ 
-        method: 'eth_requestAccounts' 
-      });
-      
-      const chainId = await window.ethereum.request({ 
-        method: 'eth_chainId' 
-      });
-      
-      const monadTestnetChainId = '0x279F';
-      
-      if (chainId !== monadTestnetChainId) {
-        try {
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: monadTestnetChainId }],
-          });
-        } catch (switchError) {
-          if (switchError.code === 4902) {
-            try {
-              await window.ethereum.request({
-                method: 'wallet_addEthereumChain',
-                params: [{
-                  chainId: monadTestnetChainId,
-                  chainName: 'Monad Testnet',
-                  nativeCurrency: {
-                    name: 'Monad',
-                    symbol: 'MON',
-                    decimals: 18
-                  },
-                  rpcUrls: ['https://testnet-rpc.monad.xyz'],
-                  blockExplorerUrls: ['https://explorer.monad.xyz']
-                }]
-              });
-            } catch (addError) {
-              alert('Failed to add Monad Testnet');
-              return;
-            }
-          } else {
-            alert('Please switch to Monad Testnet');
-            return;
-          }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MONAD NEWS - Blockchain-Verified Ecosystem Updates</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(to bottom right, #020617, #581c87, #020617);
+            min-height: 100vh;
         }
-      }
-      
-      setWalletAddress(accounts[0]);
-      setWalletConnected(true);
-      
-      if (accounts[0].toLowerCase() === ADMIN_ADDRESS.toLowerCase()) {
-        setIsAdmin(true);
-      }
-    } catch (error) {
-      console.error('Error connecting wallet:', error);
-      alert('Failed to connect wallet');
-    }
-  };
-
-  const publishArticle = async () => {
-    if (!newArticle.title || !newArticle.content) {
-      alert('Please fill in title and content');
-      return;
-    }
-
-    if (!walletConnected) {
-      alert('Please connect your wallet first');
-      return;
-    }
-
-    if (!ethersLoaded || !window.ethers) {
-      alert('Web3 library is still loading, please wait...');
-      return;
-    }
-
-    setTxStatus('preparing');
-
-    try {
-      const contractABI = [{
-        "inputs": [
-          {"type": "string", "name": "_title"},
-          {"type": "string", "name": "_content"},
-          {"type": "string", "name": "_sourceUrl"}
-        ],
-        "name": "publishArticle",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      }];
-
-      const provider = new window.ethers.providers.Web3Provider(window.ethereum);
-      const signer = provider.getSigner();
-      const contract = new window.ethers.Contract(CONTRACT_ADDRESS, contractABI, signer);
-
-      setTxStatus('signing');
-
-      const tx = await contract.publishArticle(
-        newArticle.title,
-        newArticle.content,
-        newArticle.sourceUrl
-      );
-
-      setTxStatus('confirming');
-      
-      const receipt = await tx.wait();
-
-      const article = {
-        id: `article:${Date.now()}`,
-        title: newArticle.title,
-        content: newArticle.content,
-        sourceUrl: newArticle.sourceUrl,
-        timestamp: Date.now(),
-        txHash: receipt.transactionHash,
-        author: walletAddress
-      };
-
-      await window.storage.set(article.id, JSON.stringify(article), true);
-      
-      setTxStatus('success');
-      setNewArticle({ title: '', content: '', sourceUrl: '' });
-      
-      setTimeout(() => {
-        setTxStatus('');
-        setShowAdminPanel(false);
-        loadArticles();
-      }, 3000);
-
-    } catch (error) {
-      console.error('Error publishing article:', error);
-      setTxStatus('error');
-      alert('Failed to publish article: ' + error.message);
-      setTimeout(() => setTxStatus(''), 3000);
-    }
-  };
-
-  const shareToTwitter = (article) => {
-    const websiteUrl = window.location.href;
-    const articleUrl = `${websiteUrl}#article-${article.id}`;
-    
-    const tweetTemplates = [
-      `🚀 Breaking News in Monad Ecosystem!\n\n"${article.title}"\n\n✨ Read the full story on MONAD NEWS 👇\n${articleUrl}\n\n#Monad #MonadNews #Blockchain $MON`,
-      
-      `📰 Just dropped on MONAD NEWS!\n\n${article.title}\n\n🔥 This is huge for the Monad ecosystem!\n\nRead more: ${articleUrl}\n\n#MonadEcosystem #Web3 #Crypto`,
-      
-      `⚡ Latest Update from Monad!\n\n"${article.title}"\n\n🎯 Stay ahead of the curve with MONAD NEWS\n\n👉 ${articleUrl}\n\n#Monad #CryptoNews #DeFi`,
-      
-      `🌟 Monad Community Alert!\n\n${article.title}\n\n📊 Verified on-chain news you can trust\n\nCheck it out: ${articleUrl}\n\n#MonadNetwork #BlockchainNews`,
-      
-      `💎 Don't miss this Monad update!\n\n"${article.title}"\n\n🔗 Read the full article on MONAD NEWS\n${articleUrl}\n\n#Monad #CryptoTwitter #Web3News`
-    ];
-    
-    const randomTemplate = tweetTemplates[Math.floor(Math.random() * tweetTemplates.length)];
-    const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(randomTemplate)}`;
-    
-    window.open(tweetUrl, '_blank', 'width=550,height=420');
-  };
-
-  const formatDate = (timestamp) => {
-    const date = new Date(timestamp);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const getTxStatusMessage = () => {
-    switch(txStatus) {
-      case 'preparing': return 'Preparing transaction...';
-      case 'signing': return 'Please sign the transaction in your wallet...';
-      case 'confirming': return 'Confirming transaction on Monad Testnet...';
-      case 'success': return 'Article published successfully!';
-      case 'error': return 'Transaction failed';
-      default: return '';
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950">
-      <nav className="fixed top-0 w-full bg-black/40 backdrop-blur-xl border-b border-purple-500/20 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            <div className="flex items-center space-x-3">
-              <div className="relative">
-                <div className="absolute inset-0 bg-purple-600 blur-xl opacity-60"></div>
-                <Globe className="relative w-10 h-10 text-purple-400" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
-                  MONAD NEWS
-                </h1>
-                <p className="text-xs text-purple-300/60">Blockchain-Verified Ecosystem Updates</p>
-              </div>
-            </div>
-
-            <div className="hidden md:flex items-center space-x-4">
-              {!walletConnected ? (
-                <button
-                  onClick={connectWallet}
-                  className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg shadow-purple-500/50"
-                >
-                  <Wallet className="w-5 h-5" />
-                  <span className="font-semibold">Connect Wallet</span>
-                </button>
-              ) : (
-                <div className="flex items-center space-x-3">
-                  <div className="px-4 py-2 bg-purple-900/30 rounded-xl border border-purple-500/30">
-                    <p className="text-sm text-purple-300">
-                      {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
-                    </p>
-                  </div>
-                  {isAdmin && (
-                    <button
-                      onClick={() => setShowAdminPanel(!showAdminPanel)}
-                      className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 rounded-xl hover:from-pink-700 hover:to-purple-700 transition-all"
-                    >
-                      <Plus className="w-5 h-5" />
-                      <span>New Article</span>
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <button 
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden text-purple-300"
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-        </div>
-
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-black/60 backdrop-blur-xl border-t border-purple-500/20">
-            <div className="px-4 py-4 space-y-3">
-              {!walletConnected ? (
-                <button
-                  onClick={connectWallet}
-                  className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl"
-                >
-                  <Wallet className="w-5 h-5" />
-                  <span>Connect Wallet</span>
-                </button>
-              ) : (
-                <>
-                  <div className="px-4 py-2 bg-purple-900/30 rounded-xl border border-purple-500/30 text-center">
-                    <p className="text-sm text-purple-300">
-                      {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
-                    </p>
-                  </div>
-                  {isAdmin && (
-                    <button
-                      onClick={() => {
-                        setShowAdminPanel(!showAdminPanel);
-                        setMobileMenuOpen(false);
-                      }}
-                      className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 rounded-xl"
-                    >
-                      <Plus className="w-5 h-5" />
-                      <span>New Article</span>
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        )}
-      </nav>
-
-      {showAdminPanel && isAdmin && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-slate-900 to-purple-900/50 rounded-2xl border border-purple-500/30 max-w-2xl w-full p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-purple-300">Publish New Article</h2>
-              <button 
-                onClick={() => setShowAdminPanel(false)}
-                className="text-purple-300 hover:text-purple-100"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-purple-300 mb-2">
-                  Article Title
-                </label>
-                <input
-                  type="text"
-                  value={newArticle.title}
-                  onChange={(e) => setNewArticle({...newArticle, title: e.target.value})}
-                  className="w-full px-4 py-3 bg-slate-900/50 border border-purple-500/30 rounded-xl text-white focus:outline-none focus:border-purple-500"
-                  placeholder="Enter article title..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-purple-300 mb-2">
-                  Content
-                </label>
-                <textarea
-                  value={newArticle.content}
-                  onChange={(e) => setNewArticle({...newArticle, content: e.target.value})}
-                  className="w-full px-4 py-3 bg-slate-900/50 border border-purple-500/30 rounded-xl text-white focus:outline-none focus:border-purple-500 h-40 resize-none"
-                  placeholder="Write your article content..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-purple-300 mb-2">
-                  Source URL (Optional)
-                </label>
-                <input
-                  type="url"
-                  value={newArticle.sourceUrl}
-                  onChange={(e) => setNewArticle({...newArticle, sourceUrl: e.target.value})}
-                  className="w-full px-4 py-3 bg-slate-900/50 border border-purple-500/30 rounded-xl text-white focus:outline-none focus:border-purple-500"
-                  placeholder="https://..."
-                />
-              </div>
-
-              {txStatus && (
-                <div className={`p-4 rounded-xl flex items-center space-x-3 ${
-                  txStatus === 'success' ? 'bg-green-900/30 border border-green-500/30' :
-                  txStatus === 'error' ? 'bg-red-900/30 border border-red-500/30' :
-                  'bg-purple-900/30 border border-purple-500/30'
-                }`}>
-                  {txStatus === 'success' ? <CheckCircle className="w-5 h-5 text-green-400" /> :
-                   txStatus === 'error' ? <X className="w-5 h-5 text-red-400" /> :
-                   <Clock className="w-5 h-5 text-purple-400 animate-spin" />}
-                  <span className={`text-sm ${
-                    txStatus === 'success' ? 'text-green-300' :
-                    txStatus === 'error' ? 'text-red-300' :
-                    'text-purple-300'
-                  }`}>
-                    {getTxStatusMessage()}
-                  </span>
-                </div>
-              )}
-
-              <button
-                onClick={publishArticle}
-                disabled={txStatus && txStatus !== 'error' && txStatus !== 'success'}
-                className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 font-semibold text-lg shadow-lg shadow-purple-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Publish via Monad Testnet
-              </button>
-
-              <p className="text-xs text-purple-300/60 text-center">
-                Transaction will be recorded on Monad blockchain
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="pt-32 pb-16 px-4">
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="relative inline-block">
-            <div className="absolute inset-0 bg-purple-600 blur-3xl opacity-30"></div>
-            <TrendingUp className="relative w-16 h-16 mx-auto text-purple-400 mb-6" />
-          </div>
-          <h2 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-purple-300 via-pink-300 to-purple-300 bg-clip-text text-transparent">
-            Latest Monad Ecosystem Updates
-          </h2>
-          <p className="text-xl text-purple-300/80 max-w-3xl mx-auto">
-            Stay informed with blockchain-verified news and developments from the Monad ecosystem. All articles are published on-chain for transparency.
-          </p>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 pb-20">
-        {articles.length === 0 ? (
-          <div className="text-center py-20">
-            <Globe className="w-20 h-20 mx-auto text-purple-400/30 mb-4" />
-            <p className="text-xl text-purple-300/60">No articles published yet</p>
-            <p className="text-sm text-purple-300/40 mt-2">Check back soon for updates</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {articles.map((article) => (
-              <div
-                key={article.id}
-                className="group bg-gradient-to-br from-slate-900/80 to-purple-900/30 rounded-2xl border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300 overflow-hidden shadow-xl hover:shadow-2xl hover:shadow-purple-500/20 hover:-translate-y-1"
-              >
-                <div className="p-6">
-                  <div className="flex items-center space-x-2 text-sm text-purple-300/60 mb-4">
-                    <Calendar className="w-4 h-4" />
-                    <span>{formatDate(article.timestamp)}</span>
-                  </div>
-                  
-                  <h3 className="text-xl font-bold text-purple-100 mb-3 group-hover:text-purple-300 transition-colors">
-                    {article.title}
-                  </h3>
-                  
-                  <p className="text-purple-300/80 mb-4 line-clamp-3">
-                    {article.content}
-                  </p>
-                  
-                  <div className="flex items-center justify-between pt-4 border-t border-purple-500/20">
-                    <div className="flex items-center space-x-3">
-                      {article.sourceUrl && (
-                        <a
-                          href={article.sourceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center space-x-1 text-sm text-purple-400 hover:text-purple-300 transition-colors"
-                        >
-                          <span>Source</span>
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
-                      )}
-                      
-                      <button
-                        onClick={() => shareToTwitter(article)}
-                        className="flex items-center space-x-1 text-sm text-purple-400 hover:text-purple-300 transition-colors group/share"
-                        title="Share on Twitter"
-                      >
-                        <Share2 className="w-4 h-4 group-hover/share:scale-110 transition-transform" />
-                        <span>Share</span>
-                      </button>
+        .glass-effect {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(40px);
+        }
+        .gradient-text {
+            background: linear-gradient(to right, #c084fc, #f9a8d4, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .article-card {
+            transition: all 0.3s ease;
+        }
+        .article-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(168, 85, 247, 0.2);
+        }
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full glass-effect border-b border-purple-500/20 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center space-x-3">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-purple-600 blur-xl opacity-60"></div>
+                        <svg class="relative w-10 h-10 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
                     </div>
-                    
-                    {article.txHash && (
-                      <a
-                        href={`https://explorer.monad.xyz/tx/${article.txHash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-purple-400/60 hover:text-purple-300 transition-colors"
-                        title="View on Monad Explorer"
-                      >
-                        On-chain ✓
-                      </a>
-                    )}
-                  </div>
+                    <div>
+                        <h1 class="text-3xl font-bold gradient-text">MONAD NEWS</h1>
+                        <p class="text-xs text-purple-300/60">Blockchain-Verified Ecosystem Updates</p>
+                    </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
-      <footer className="border-t border-purple-500/20 bg-black/40 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <div className="text-center md:text-left">
-              <p className="text-purple-300/80 font-semibold mb-1">MONAD NEWS</p>
-              <p className="text-sm text-purple-300/40">Blockchain-verified ecosystem updates</p>
+                <div class="hidden md:flex items-center space-x-4">
+                    <button id="connectWalletBtn" class="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg shadow-purple-500/50 font-semibold">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                        </svg>
+                        <span>Connect Wallet</span>
+                    </button>
+                    <div id="walletInfo" class="hidden items-center space-x-3">
+                        <div class="px-4 py-2 bg-purple-900/30 rounded-xl border border-purple-500/30">
+                            <p id="walletAddressDisplay" class="text-sm text-purple-300"></p>
+                        </div>
+                        <button id="newArticleBtn" class="hidden items-center space-x-2 px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 rounded-xl hover:from-pink-700 hover:to-purple-700 transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            <span>New Article</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Admin Panel Modal -->
+    <div id="adminPanel" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-gradient-to-br from-slate-900 to-purple-900/50 rounded-2xl border border-purple-500/30 max-w-2xl w-full p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-purple-300">Publish New Article</h2>
+                <button id="closeAdminPanel" class="text-purple-300 hover:text-purple-100">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-purple-300 mb-2">Article Title</label>
+                    <input type="text" id="articleTitle" class="w-full px-4 py-3 bg-slate-900/50 border border-purple-500/30 rounded-xl text-white focus:outline-none focus:border-purple-500" placeholder="Enter article title...">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-purple-300 mb-2">Content</label>
+                    <textarea id="articleContent" class="w-full px-4 py-3 bg-slate-900/50 border border-purple-500/30 rounded-xl text-white focus:outline-none focus:border-purple-500 h-40 resize-none" placeholder="Write your article content..."></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-purple-300 mb-2">Source URL (Optional)</label>
+                    <input type="url" id="articleSource" class="w-full px-4 py-3 bg-slate-900/50 border border-purple-500/30 rounded-xl text-white focus:outline-none focus:border-purple-500" placeholder="https://...">
+                </div>
+
+                <div id="txStatusDiv" class="hidden p-4 rounded-xl flex items-center space-x-3">
+                    <svg id="txStatusIcon" class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span id="txStatusText" class="text-sm"></span>
+                </div>
+
+                <button id="publishBtn" class="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 font-semibold text-lg shadow-lg shadow-purple-500/50">
+                    Publish via Monad Testnet
+                </button>
+
+                <p class="text-xs text-purple-300/60 text-center">Transaction will be recorded on Monad blockchain</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <div class="pt-32 pb-16 px-4">
+        <div class="max-w-7xl mx-auto text-center">
+            <div class="relative inline-block mb-6">
+                <div class="absolute inset-0 bg-purple-600 blur-3xl opacity-30"></div>
+                <svg class="relative w-16 h-16 mx-auto text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+            </div>
+            <h2 class="text-5xl md:text-6xl font-bold mb-6 gradient-text">
+                Latest Monad Ecosystem Updates
+            </h2>
+            <p class="text-xl text-purple-300/80 max-w-3xl mx-auto">
+                Stay informed with blockchain-verified news and developments from the Monad ecosystem. All articles are published on-chain for transparency.
+            </p>
+        </div>
+    </div>
+
+    <!-- Articles Grid -->
+    <div class="max-w-7xl mx-auto px-4 pb-20">
+        <div id="articlesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Articles will be loaded here -->
+        </div>
+        <div id="noArticles" class="text-center py-20">
+            <svg class="w-20 h-20 mx-auto text-purple-400/30 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p class="text-xl text-purple-300/60">No articles published yet</p>
+            <p class="text-sm text-purple-300/40 mt-2">Check back soon for updates</p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-purple-500/20 glass-effect">
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                <div class="text-center md:text-left">
+                    <p class="text-purple-300/80 font-semibold mb-1">MONAD NEWS</p>
+                    <p class="text-sm text-purple-300/40">Blockchain-verified ecosystem updates</p>
+                </div>
+                
+                <div class="flex items-center space-x-2 text-sm text-purple-300/60">
+                    <span>Created by</span>
+                    <a href="https://x.com/ega_2ez4crypto" target="_blank" rel="noopener noreferrer" class="text-purple-400 hover:text-purple-300 transition-colors font-semibold flex items-center space-x-1">
+                        <span>@ega_2ez4crypto</span>
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                    </a>
+                </div>
             </div>
             
-            <div className="flex items-center space-x-2 text-sm text-purple-300/60">
-              <span>Created by</span>
-              <a
-                href="https://x.com/ega_2ez4crypto"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-purple-400 hover:text-purple-300 transition-colors font-semibold flex items-center space-x-1"
-              >
-                <span>@ega_2ez4crypto</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
+            <div class="mt-6 pt-6 border-t border-purple-500/10 text-center">
+                <p class="text-xs text-purple-300/40">
+                    All articles are published on Monad Testnet • Powered by Web3
+                </p>
             </div>
-          </div>
-          
-          <div className="mt-6 pt-6 border-t border-purple-500/10 text-center">
-            <p className="text-xs text-purple-300/40">
-              All articles are published on Monad Testnet • Powered by Web3
-            </p>
-          </div>
         </div>
-      </footer>
-    </div>
-  );
-};
+    </footer>
 
-export default MonadNews;
+    <script>
+        const ADMIN_ADDRESS = '0x287aBD1674f25C524503cDA2f1FD42EbECC401eA';
+        const CONTRACT_ADDRESS = '0x9af2CAb96e7CdCf5f8d78a8b6E923a5F3d183A4c';
+        const MONAD_CHAIN_ID = '0x279F';
+
+        let walletAddress = '';
+        let isAdmin = false;
+
+        // Load articles from storage
+        async function loadArticles() {
+            const container = document.getElementById('articlesContainer');
+            const noArticles = document.getElementById('noArticles');
+            
+            try {
+                const stored = await window.storage.list('article:', true);
+                if (stored && stored.keys && stored.keys.length > 0) {
+                    const articles = [];
+                    for (const key of stored.keys) {
+                        try {
+                            const result = await window.storage.get(key, true);
+                            if (result) {
+                                articles.push(JSON.parse(result.value));
+                            }
+                        } catch (e) {
+                            console.error('Error loading article:', e);
+                        }
+                    }
+                    
+                    articles.sort((a, b) => b.timestamp - a.timestamp);
+                    
+                    if (articles.length > 0) {
+                        noArticles.classList.add('hidden');
+                        container.innerHTML = articles.map(article => createArticleCard(article)).join('');
+                    } else {
+                        noArticles.classList.remove('hidden');
+                    }
+                } else {
+                    noArticles.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.log('No articles yet:', error);
+                noArticles.classList.remove('hidden');
+            }
+        }
+
+        function createArticleCard(article) {
+            const date = new Date(article.timestamp).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            return `
+                <div class="article-card bg-gradient-to-br from-slate-900/80 to-purple-900/30 rounded-2xl border border-purple-500/20 hover:border-purple-500/50 overflow-hidden shadow-xl">
+                    <div class="p-6">
+                        <div class="flex items-center space-x-2 text-sm text-purple-300/60 mb-4">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <span>${date}</span>
+                        </div>
+                        
+                        <h3 class="text-xl font-bold text-purple-100 mb-3">${article.title}</h3>
+                        
+                        <p class="text-purple-300/80 mb-4 line-clamp-3">${article.content}</p>
+                        
+                        <div class="flex items-center justify-between pt-4 border-t border-purple-500/20">
+                            <div class="flex items-center space-x-3">
+                                ${article.sourceUrl ? `
+                                    <a href="${article.sourceUrl}" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-1 text-sm text-purple-400 hover:text-purple-300 transition-colors">
+                                        <span>Source</span>
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                        </svg>
+                                    </a>
+                                ` : ''}
+                                
+                                <button onclick="shareToTwitter('${article.title}', '${article.id}')" class="flex items-center space-x-1 text-sm text-purple-400 hover:text-purple-300 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+                                    </svg>
+                                    <span>Share</span>
+                                </button>
+                            </div>
+                            
+                            ${article.txHash ? `
+                                <a href="https://explorer.monad.xyz/tx/${article.txHash}" target="_blank" rel="noopener noreferrer" class="text-xs text-purple-400/60 hover:text-purple-300 transition-colors" title="View on Monad Explorer">
+                                    On-chain ✓
+                                </a>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function shareToTwitter(title, articleId) {
+            const websiteUrl = window.location.href.split('#')[0];
+            const articleUrl = `${websiteUrl}#article-${articleId}`;
+            
+            const tweetTemplates = [
+                `🚀 Breaking News in Monad Ecosystem!\n\n"${title}"\n\n✨ Read the full story on MONAD NEWS 👇\n${articleUrl}\n\n#Monad #MonadNews #Blockchain $MON`,
+                `📰 Just dropped on MONAD NEWS!\n\n${title}\n\n🔥 This is huge for the Monad ecosystem!\n\nRead more: ${articleUrl}\n\n#MonadEcosystem #Web3 #Crypto`,
+                `⚡ Latest Update from Monad!\n\n"${title}"\n\n🎯 Stay ahead of the curve with MONAD NEWS\n\n👉 ${articleUrl}\n\n#Monad #CryptoNews #DeFi`,
+                `🌟 Monad Community Alert!\n\n${title}\n\n📊 Verified on-chain news you can trust\n\nCheck it out: ${articleUrl}\n\n#MonadNetwork #BlockchainNews`,
+                `💎 Don't miss this Monad update!\n\n"${title}"\n\n🔗 Read the full article on MONAD NEWS\n${articleUrl}\n\n#Monad #CryptoTwitter #Web3News`
+            ];
+            
+            const randomTemplate = tweetTemplates[Math.floor(Math.random() * tweetTemplates.length)];
+            const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(randomTemplate)}`;
+            
+            window.open(tweetUrl, '_blank', 'width=550,height=420');
+        }
+
+        async function connectWallet() {
+            if (typeof window.ethereum === 'undefined') {
+                alert('Please install MetaMask or another Web3 wallet');
+                return;
+            }
+
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                
+                if (chainId !== MONAD_CHAIN_ID) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: MONAD_CHAIN_ID }],
+                        });
+                    } catch (switchError) {
+                        if (switchError.code === 4902) {
+                            await window.ethereum.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [{
+                                    chainId: MONAD_CHAIN_ID,
+                                    chainName: 'Monad Testnet',
+                                    nativeCurrency: { name: 'Monad', symbol: 'MON', decimals: 18 },
+                                    rpcUrls: ['https://testnet-rpc.monad.xyz'],
+                                    blockExplorerUrls: ['https://explorer.monad.xyz']
+                                }]
+                            });
+                        }
+                    }
+                }
+                
+                walletAddress = accounts[0];
+                document.getElementById('connectWalletBtn').classList.add('hidden');
+                document.getElementById('walletInfo').classList.remove('hidden');
+                document.getElementById('walletInfo').classList.add('flex');
+                document.getElementById('walletAddressDisplay').textContent = 
+                    `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+                
+                if (walletAddress.toLowerCase() === ADMIN_ADDRESS.toLowerCase()) {
+                    isAdmin = true;
+                    document.getElementById('newArticleBtn').classList.remove('hidden');
+                    document.getElementById('newArticleBtn').classList.add('flex');
+                }
+            } catch (error) {
+                console.error('Error connecting wallet:', error);
+                alert('Failed to connect wallet');
+            }
+        }
+
+        async function publishArticle() {
+            const title = document.getElementById('articleTitle').value.trim();
+            const content = document.getElementById('articleContent').value.trim();
+            const sourceUrl = document.getElementById('articleSource').value.trim();
+
+            if (!title || !content) {
+                alert('Please fill in title and content');
+                return;
+            }
+
+            const statusDiv = document.getElementById('txStatusDiv');
+            const statusText = document.getElementById('txStatusText');
+            const publishBtn = document.getElementById('publishBtn');
+
+            statusDiv.classList.remove('hidden');
+            statusDiv.className = 'p-4 rounded-xl flex items-center space-x-3 bg-purple-900/30 border border-purple-500/30';
+            statusText.className = 'text-sm text-purple-300';
+            statusText.textContent = 'Preparing transaction...';
+            publishBtn.disabled = true;
+
+            try {
+                const contractABI = [{
+                    "inputs": [
+                        {"type": "string", "name": "_title"},
+                        {"type": "string", "name": "_content"},
+                        {"type": "string", "name": "_sourceUrl"}
+                    ],
+                    "name": "publishArticle",
+                    "outputs": [],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                }];
+
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const signer = provider.getSigner();
+                const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer);
+
+                statusText.textContent = 'Please sign the transaction in your wallet...';
+                
+                const tx = await contract.publishArticle(title, content, sourceUrl);
+                
+                statusText.textContent = 'Confirming transaction on Monad Testnet...';
+                
+                const receipt = await tx.wait();
+
+                const article = {
+                    id: `article:${Date.now()}`,
+                    title: title,
+                    content: content,
+                    sourceUrl: sourceUrl,
+                    timestamp: Date.now(),
+                    txHash: receipt.transactionHash,
+                    author: walletAddress
+                };
+
+                await window.storage.set(article.id, JSON.stringify(article), true);
+                
+                statusDiv.className = 'p-4 rounded-xl flex items-center space-x-3 bg-green-900/30 border border-green-500/30';
+                statusText.className = 'text-sm text-green-300';
+                statusText.textContent = 'Article published successfully!';
+
+                document.getElementById('articleTitle').value = '';
+                document.getElementById('articleContent').value = '';
+                document.getElementById('articleSource').value = '';
+
+                setTimeout(() => {
+                    document.getElementById('adminPanel').classList.add('hidden');
+                    statusDiv.classList.add('hidden');
+                    publishBtn.disabled = false;
+                    loadArticles();
+                }, 2000);
+
+            } catch (error) {
+                console.error('Error publishing:', error);
+                statusDiv.className = 'p-4 rounded-xl flex items-center space-x-3 bg-red-900/30 border border-red-500/30';
+                statusText.className = 'text-sm text-red-300';
+                statusText.textContent = 'Transaction failed: ' + error.message;
+                publishBtn.disabled = false;
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('connectWalletBtn').addEventListener('click', connectWallet);
+        document.getElementById('newArticleBtn').addEventListener('click', () => {
+            document.getElementById('adminPanel').classList.remove('hidden');
+        });
+        document.getElementById('closeAdminPanel').addEventListener('click', () => {
+            document.getElementById('adminPanel').classList.add('hidden');
+        });
+        document.getElementById('publishBtn').addEventListener('click', publishArticle);
+
+        // Load articles on page load
+        loadArticles();
+    </script>
+</body>
+</html>
