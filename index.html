@@ -739,35 +739,105 @@
 
         async function loadArticles() {
             try {
-                // Load from localStorage (articles submitted via blockchain)
-                const stored = localStorage.getItem('monadArticles');
-                if (stored) {
-                    articles = JSON.parse(stored).sort((a, b) => new Date(b.date) - new Date(a.date));
-                    renderArticles();
+                // Try to load from blockchain first
+                if (provider) {
+                    await loadArticlesFromBlockchain();
                 } else {
-                    // Sample articles for demo
-                    articles = [
-                        {
-                            id: 1,
-                            title: "Monad Testnet Reaches 1M Transactions",
-                            content: "The Monad testnet has successfully processed over 1 million transactions, demonstrating significant scalability improvements.",
-                            source: "https://monad.xyz",
-                            date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-                            hash: "0x1234...5678"
-                        },
-                        {
-                            id: 2,
-                            title: "New DeFi Protocol Launches on Monad",
-                            content: "A groundbreaking DeFi protocol has launched on the Monad blockchain, offering innovative yield farming mechanisms.",
-                            source: "https://monad.xyz",
-                            date: new Date(Date.now() - 86400000).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-                            hash: "0x9876...5432"
-                        }
-                    ];
-                    renderArticles();
+                    // Fallback to localStorage
+                    loadArticlesFromStorage();
                 }
             } catch (error) {
                 console.error('Load articles error:', error);
+                loadArticlesFromStorage();
+            }
+        }
+
+        async function loadArticlesFromBlockchain() {
+            try {
+                // Contract ABI from MonadNews contract
+                const contractABI = [
+                    "function getLatestArticleIds(uint256 _limit) public view returns (uint256[])",
+                    "function getArticle(uint256 _id) public view returns (uint256 id, string memory title, string memory content, string memory sourceUrl, uint256 timestamp, address author)",
+                    "function getTotalArticles() public view returns (uint256)"
+                ];
+
+                const contract = new ethers.Contract(
+                    CONFIG.CONTRACT_ADDRESS,
+                    contractABI,
+                    provider
+                );
+
+                // Fetch total articles
+                const totalArticles = await contract.getTotalArticles();
+                
+                if (totalArticles > 0) {
+                    // Fetch latest article IDs (limit to 50)
+                    const limit = totalArticles > 50 ? 50 : totalArticles;
+                    const articleIds = await contract.getLatestArticleIds(limit);
+                    
+                    articles = [];
+                    
+                    // Fetch each article
+                    for (let i = 0; i < articleIds.length; i++) {
+                        try {
+                            const articleData = await contract.getArticle(articleIds[i]);
+                            const date = new Date(Number(articleData.timestamp) * 1000).toLocaleDateString('en-US', { 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                            });
+                            
+                            articles.push({
+                                id: Number(articleData.id),
+                                title: articleData.title,
+                                content: articleData.content,
+                                source: articleData.sourceUrl,
+                                date: date,
+                                timestamp: Number(articleData.timestamp),
+                                author: articleData.author
+                            });
+                        } catch (err) {
+                            console.error(`Error fetching article ${articleIds[i]}:`, err);
+                        }
+                    }
+                    
+                    // Sort by timestamp descending
+                    articles.sort((a, b) => b.timestamp - a.timestamp);
+                    renderArticles();
+                    return;
+                }
+            } catch (error) {
+                console.log('Could not load from blockchain:', error.message);
+            }
+            loadArticlesFromStorage();
+        }
+
+        function loadArticlesFromStorage() {
+            const stored = localStorage.getItem('monadArticles');
+            if (stored) {
+                articles = JSON.parse(stored).sort((a, b) => new Date(b.date) - new Date(a.date));
+                renderArticles();
+            } else {
+                // Sample articles for demo
+                articles = [
+                    {
+                        id: 1,
+                        title: "Monad Testnet Reaches 1M Transactions",
+                        content: "The Monad testnet has successfully processed over 1 million transactions, demonstrating significant scalability improvements.",
+                        source: "https://monad.xyz",
+                        date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+                        hash: "0x1234...5678"
+                    },
+                    {
+                        id: 2,
+                        title: "New DeFi Protocol Launches on Monad",
+                        content: "A groundbreaking DeFi protocol has launched on the Monad blockchain, offering innovative yield farming mechanisms.",
+                        source: "https://monad.xyz",
+                        date: new Date(Date.now() - 86400000).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+                        hash: "0x9876...5432"
+                    }
+                ];
+                renderArticles();
             }
         }
 
@@ -818,63 +888,92 @@
         async function publishArticle(e) {
             e.preventDefault();
 
-            if (!isAdmin) {
-                showNotification('Admin access required');
+            if (!userAddress || !isAdmin) {
+                showNotification('Admin access required. Please connect wallet first.');
                 return;
             }
 
             const title = document.getElementById('articleTitle').value;
             const content = document.getElementById('articleContent').value;
-            const link = document.getElementById('articleLink').value;
+            const sourceUrl = document.getElementById('articleLink').value;
 
             try {
                 const btn = e.target.querySelector('.btn-submit');
                 btn.disabled = true;
                 btn.innerHTML = '<div class="loading"></div>';
 
-                // Simulate blockchain transaction
-                await simulateBlockchainTx();
+                // Get signer from MetaMask
+                const provider = new ethers.BrowserProvider(window.ethereum);
+                signer = await provider.getSigner();
 
-                const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-                const newArticle = {
-                    id: Date.now(),
-                    title,
-                    content,
-                    source: link,
-                    date: today,
-                    hash: `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 10)}`
-                };
+                // Contract ABI from MonadNews contract
+                const contractABI = [
+                    "function publishArticle(string memory _title, string memory _content, string memory _sourceUrl) public onlyAdmin"
+                ];
 
-                articles.unshift(newArticle);
-                localStorage.setItem('monadArticles', JSON.stringify(articles));
+                const contract = new ethers.Contract(
+                    CONFIG.CONTRACT_ADDRESS,
+                    contractABI,
+                    signer
+                );
 
-                showNotification('✓ Article published successfully!');
-                renderArticles();
-                closePostModal();
+                // Send transaction to blockchain
+                showNotification('⏳ Sending transaction to blockchain...');
+                const tx = await contract.publishArticle(title, content, sourceUrl);
+                
+                showNotification('⏳ Waiting for confirmation...');
+                const receipt = await tx.wait();
+
+                if (receipt) {
+                    showNotification(`✓ Article published onchain! TX: ${receipt.hash.substring(0, 10)}...`);
+                    
+                    // Reload articles from contract
+                    setTimeout(() => {
+                        loadArticlesFromBlockchain();
+                        closePostModal();
+                    }, 2000);
+                }
 
                 btn.disabled = false;
                 btn.innerHTML = 'Publish via Blockchain';
             } catch (error) {
                 console.error('Publish error:', error);
-                showNotification('Failed to publish article');
+                let errorMsg = 'Failed to publish article';
+                
+                if (error.message.includes('user rejected')) {
+                    errorMsg = 'Transaction rejected by user';
+                } else if (error.message.includes('insufficient funds')) {
+                    errorMsg = 'Insufficient gas for transaction';
+                } else if (error.message.includes('Only admin')) {
+                    errorMsg = 'Only admin can publish articles';
+                } else if (error.message.includes('cannot be empty')) {
+                    errorMsg = 'Title and content cannot be empty';
+                }
+                
+                showNotification(errorMsg);
                 e.target.querySelector('.btn-submit').disabled = false;
                 e.target.querySelector('.btn-submit').innerHTML = 'Publish via Blockchain';
             }
         }
 
-        function simulateBlockchainTx() {
-            return new Promise((resolve) => {
-                setTimeout(resolve, 2000);
-            });
-        }
-
-        function deleteArticle(id) {
+        async function deleteArticle(id) {
             if (!isAdmin) return;
-            if (confirm('Are you sure you want to delete this article?')) {
+            if (!confirm('Are you sure you want to delete this article?')) return;
+
+            try {
+                const provider = new ethers.BrowserProvider(window.ethereum);
+                signer = await provider.getSigner();
+
+                // Note: MonadNews contract doesn't have delete function
+                // So we'll just remove from local display
                 articles = articles.filter(a => a.id !== id);
-                localStorage.setItem('monadArticles', JSON.stringify(articles));
                 renderArticles();
-                showNotification('Article deleted');
+                showNotification('Article removed from view (Note: Cannot delete onchain)');
+            } catch (error) {
+                console.error('Delete error:', error);
+                articles = articles.filter(a => a.id !== id);
+                renderArticles();
+                showNotification('Article removed');
             }
         }
 
