@@ -775,7 +775,7 @@
                     </div>
                     <div class="card-title">${article.title}</div>
                     <div class="card-content">${article.content}</div>
-                    <div class="card-source">📎 <a href="${article.source}" target="_blank">View Source</a></div>
+                    <div class="card-source">📎 <a href="${article.source}" target="_blank" style="word-break: break-all; cursor: pointer;">${article.source}</a></div>
                     <button class="share-btn" onclick="shareArticle('${article.title}', '${article.source}')">
                         Share on Twitter 𝕏
                     </button>
