@@ -308,6 +308,13 @@
             background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
             opacity: 0;
             transition: opacity 0.4s ease;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .article-card > * {
+            position: relative;
+            z-index: 1;
         }
 
         .article-card:hover {
@@ -369,11 +376,28 @@
             color: #60a5fa;
             text-decoration: underline;
             transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+            cursor: pointer;
         }
 
         .article-content a:hover {
             color: #3b82f6;
             text-shadow: 0 0 8px rgba(96, 165, 250, 0.5);
+        }
+
+        .source-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+            cursor: pointer;
         }
 
         .article-footer {
@@ -395,6 +419,20 @@
             transition: all 0.3s ease;
         }
 
+        .source-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+            cursor: pointer;
+        }
+
         .source-link:hover {
             color: var(--secondary);
             gap: 8px;
@@ -410,6 +448,8 @@
             font-size: 12px;
             font-weight: 600;
             transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
         }
 
         .share-btn:hover {
