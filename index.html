@@ -1,4 +1,47 @@
-<!DOCTYPE html>
+async function deleteArticleConfirm(id) {
+            if (!confirm(`Are you sure you want to delete article #${id}?\n\nThis action will permanently mark the article as deleted on the blockchain.`)) {
+                return;
+            }
+
+            try {
+                showStatus('🗑️ Deleting article from blockchain...', 'success');
+                
+                const tx = await contract.deleteArticle(id);
+                showStatus('Transaction submitted! Waiting for confirmation...', 'success');
+                
+                await tx.wait();
+                showStatus('✅ Article deleted successfully!', 'success');
+                
+                // Remove from UI with animation
+                const articleCards = document.querySelectorAll('.article-card');
+                articleCards.forEach(card => {
+                    const idElement = card.querySelector('.article-id');
+                    if (idElement && idElement.textContent === `#${id}`) {
+                        card.style.animation = 'fadeOut 0.5s ease';
+                        setTimeout(() => {
+                            card.remove();
+                        }, 500);
+                    }
+                });
+                
+                // Reload articles after a short delay
+                setTimeout(() => {
+                    loadArticles(true);
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Delete error:', error);
+                if (error.code === 'ACTION_REJECTED') {
+                    showStatus('Transaction cancelled by user.', 'error');
+                } else {
+                    showStatus('Failed to delete article: ' + error.message, 'error');
+                }
+            }
+        }
+
+        async function deleteArticle(id) {
+            showStatus('Delete functionality requires contract upgrade. Article ID: ' + id, 'error');
+        }<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -42,21 +85,71 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-                        radial-gradient(circle at 40% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+            background: 
+                linear-gradient(45deg, transparent 30%, rgba(99, 102, 241, 0.03) 30%, rgba(99, 102, 241, 0.03) 70%, transparent 70%),
+                linear-gradient(-45deg, transparent 30%, rgba(139, 92, 246, 0.03) 30%, rgba(139, 92, 246, 0.03) 70%, transparent 70%);
+            background-size: 100px 100px;
             z-index: 0;
-            animation: gradientShift 15s ease infinite;
+            animation: electricGrid 20s linear infinite;
         }
 
-        @keyframes gradientShift {
-            0%, 100% {
-                opacity: 1;
-                transform: scale(1) rotate(0deg);
+        @keyframes electricGrid {
+            0% {
+                background-position: 0 0, 0 0;
             }
-            50% {
-                opacity: 0.8;
-                transform: scale(1.1) rotate(5deg);
+            100% {
+                background-position: 100px 100px, -100px 100px;
+            }
+        }
+
+        .lightning-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .lightning {
+            position: absolute;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(to bottom, 
+                transparent 0%, 
+                rgba(99, 102, 241, 0.8) 20%, 
+                rgba(139, 92, 246, 0.9) 50%, 
+                rgba(99, 102, 241, 0.8) 80%, 
+                transparent 100%);
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.8), 
+                        0 0 20px rgba(139, 92, 246, 0.6),
+                        0 0 30px rgba(99, 102, 241, 0.4);
+            opacity: 0;
+            animation: lightning-strike 3s ease-in-out infinite;
+        }
+
+        @keyframes lightning-strike {
+            0%, 100% {
+                opacity: 0;
+                transform: scaleY(0) translateY(-50%);
+            }
+            5% {
+                opacity: 1;
+                transform: scaleY(1) translateY(0);
+            }
+            10% {
+                opacity: 0;
+                transform: scaleY(0.8) translateY(10%);
+            }
+            15% {
+                opacity: 0.6;
+                transform: scaleY(1) translateY(0);
+            }
+            20%, 100% {
+                opacity: 0;
+                transform: scaleY(0) translateY(50%);
             }
         }
 
@@ -529,9 +622,17 @@
                 font-size: 24px;
             }
         }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+        }
     </style>
 </head>
 <body>
+    <div class="lightning-container"></div>
     <div class="floating-particles"></div>
     
     <header>
@@ -593,18 +694,22 @@
     </footer>
 
     <script>
-        const CONTRACT_ADDRESS = "0x37772B3021dF185F46372778a947FC470B832348";
+        const CONTRACT_ADDRESS = "0x7Da868949DB4E048190d437580d3429af7dC68c9";
         const ADMIN_ADDRESS = "0x287aBD1674f25C524503cDA2f1FD42EbECC401eA";
         const CHAIN_ID = 10143;
         const RPC_URL = "https://testnet-rpc.monad.xyz";
 
         const CONTRACT_ABI = [
             "function publishArticle(string memory _title, string memory _content, string memory _sourceUrl) public",
-            "function getArticle(uint256 _id) public view returns (tuple(uint256 id, string title, string content, string sourceUrl, uint256 timestamp, address author))",
+            "function deleteArticle(uint256 _id) public",
+            "function getArticle(uint256 _id) public view returns (tuple(uint256 id, string title, string content, string sourceUrl, uint256 timestamp, address author, bool isDeleted))",
             "function getTotalArticles() public view returns (uint256)",
             "function getLatestArticleIds(uint256 _limit) public view returns (uint256[])",
             "function isAdmin(address _address) public view returns (bool)",
-            "event ArticlePublished(uint256 indexed id, string title, address indexed author, uint256 timestamp)"
+            "function getAllArticleIds() public view returns (uint256[])",
+            "function isArticleDeleted(uint256 _id) public view returns (bool)",
+            "event ArticlePublished(uint256 indexed id, string title, address indexed author, uint256 timestamp)",
+            "event ArticleDeleted(uint256 indexed id, address indexed deletedBy, uint256 timestamp)"
         ];
 
         let provider;
@@ -708,7 +813,7 @@
                     const twitterShareLink = `https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}`;
 
                     const deleteBtn = isAdmin ? 
-                        `<button class="btn btn-danger" onclick="deleteArticle(${article.id})">🗑️ Delete</button>` : '';
+                        `<button class="btn btn-danger" onclick="deleteArticleConfirm(${article.id})">🗑️ Delete</button>` : '';
 
                     articlesHTML.push(`
                         <div class="article-card">
@@ -769,6 +874,31 @@
             }
         }
 
+        async function deleteArticleConfirm(id) {
+            if (!confirm(`Are you sure you want to delete article #${id}?\n\nNote: The smart contract doesn't have a delete function yet. This will only hide the article from the UI temporarily until the page is refreshed.`)) {
+                return;
+            }
+
+            try {
+                showStatus('⚠️ Delete function not available in current smart contract. Please deploy an updated contract with delete functionality.', 'error');
+                
+                // Temporary UI removal (will come back on refresh)
+                const articleCards = document.querySelectorAll('.article-card');
+                articleCards.forEach(card => {
+                    const idElement = card.querySelector('.article-id');
+                    if (idElement && idElement.textContent === `#${id}`) {
+                        card.style.animation = 'fadeOut 0.5s ease';
+                        setTimeout(() => {
+                            card.remove();
+                        }, 500);
+                    }
+                });
+            } catch (error) {
+                console.error('Delete error:', error);
+                showStatus('Failed to delete article: ' + error.message, 'error');
+            }
+        }
+
         async function deleteArticle(id) {
             showStatus('Delete functionality requires contract upgrade. Article ID: ' + id, 'error');
         }
@@ -785,6 +915,7 @@
         }
 
         window.addEventListener('load', async () => {
+            createLightningEffect();
             createFloatingParticles();
             
             if (typeof window.ethereum !== 'undefined') {
@@ -800,6 +931,20 @@
             const readContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, readProvider);
             loadArticles(false);
         });
+
+        function createLightningEffect() {
+            const container = document.querySelector('.lightning-container');
+            const lightningCount = 8;
+
+            for (let i = 0; i < lightningCount; i++) {
+                const lightning = document.createElement('div');
+                lightning.className = 'lightning';
+                lightning.style.left = Math.random() * 100 + '%';
+                lightning.style.animationDelay = Math.random() * 3 + 's';
+                lightning.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                container.appendChild(lightning);
+            }
+        }
 
         function createFloatingParticles() {
             const particlesContainer = document.querySelector('.floating-particles');
