@@ -12,7 +12,6 @@ async function deleteArticleConfirm(id) {
                 await tx.wait();
                 showStatus('✅ Article deleted successfully!', 'success');
                 
-                // Remove from UI with animation
                 const articleCards = document.querySelectorAll('.article-card');
                 articleCards.forEach(card => {
                     const idElement = card.querySelector('.article-id');
@@ -24,7 +23,6 @@ async function deleteArticleConfirm(id) {
                     }
                 });
                 
-                // Reload articles after a short delay
                 setTimeout(() => {
                     loadArticles(true);
                 }, 1500);
@@ -37,10 +35,6 @@ async function deleteArticleConfirm(id) {
                     showStatus('Failed to delete article: ' + error.message, 'error');
                 }
             }
-        }
-
-        async function deleteArticle(id) {
-            showStatus('Delete functionality requires contract upgrade. Article ID: ' + id, 'error');
         }<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -53,6 +47,8 @@ async function deleteArticleConfirm(id) {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         :root {
@@ -68,6 +64,12 @@ async function deleteArticleConfirm(id) {
             --error: #ef4444;
         }
 
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: #000000;
@@ -76,6 +78,8 @@ async function deleteArticleConfirm(id) {
             line-height: 1.6;
             position: relative;
             overflow-x: hidden;
+            margin: 0;
+            padding: 0;
         }
 
         body::before {
@@ -153,6 +157,17 @@ async function deleteArticleConfirm(id) {
             }
         }
 
+        .lightning-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
         .floating-particles {
             position: fixed;
             top: 0;
@@ -161,6 +176,7 @@ async function deleteArticleConfirm(id) {
             height: 100%;
             pointer-events: none;
             z-index: 1;
+            overflow: hidden;
         }
 
         .particle {
@@ -200,6 +216,8 @@ async function deleteArticleConfirm(id) {
             padding: 20px;
             position: relative;
             z-index: 2;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         header {
@@ -616,10 +634,24 @@ async function deleteArticleConfirm(id) {
             .header-content {
                 flex-direction: column;
                 align-items: flex-start;
+                width: 100%;
             }
 
             .logo h1 {
                 font-size: 24px;
+            }
+
+            .wallet-section {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .admin-controls {
+                padding: 16px;
             }
         }
 
@@ -780,12 +812,15 @@ async function deleteArticleConfirm(id) {
 
         async function loadArticles(isAdmin = false) {
             try {
-                const readProvider = new ethers.JsonRpcProvider(RPC_URL);
+                const readProvider = new ethers.JsonRpcProvider(RPC_URL, {
+                    chainId: CHAIN_ID,
+                    name: 'monad-testnet'
+                });
                 const readContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, readProvider);
 
                 const totalArticles = await readContract.getTotalArticles();
                 
-                if (totalArticles == 0) {
+                if (Number(totalArticles) === 0) {
                     document.getElementById('articlesContainer').innerHTML = 
                         '<div class="loading"><p>No articles published yet. Be the first to share news!</p></div>';
                     return;
@@ -795,55 +830,64 @@ async function deleteArticleConfirm(id) {
                 const articlesHTML = [];
 
                 for (let id of latestIds) {
-                    const article = await readContract.getArticle(id);
-                    const date = new Date(Number(article.timestamp) * 1000);
-                    const formattedDate = date.toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
+                    try {
+                        const article = await readContract.getArticle(id);
+                        const date = new Date(Number(article.timestamp) * 1000);
+                        const formattedDate = date.toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
 
-                    const shareUrl = encodeURIComponent(window.location.href);
-                    const shareText = encodeURIComponent(
-                        `🚀 Check out this latest update from Monad ecosystem: "${article.title}"\n\n` +
-                        `Stay informed with MONAD NEWS! 📰\n\n`
-                    );
-                    const twitterShareLink = `https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}`;
+                        const shareUrl = encodeURIComponent(window.location.href);
+                        const shareText = encodeURIComponent(
+                            `🚀 Check out this latest update from Monad ecosystem: "${article.title}"\n\n` +
+                            `Stay informed with MONAD NEWS! 📰\n\n`
+                        );
+                        const twitterShareLink = `https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}`;
 
-                    const deleteBtn = isAdmin ? 
-                        `<button class="btn btn-danger" onclick="deleteArticleConfirm(${article.id})">🗑️ Delete</button>` : '';
+                        const deleteBtn = isAdmin ? 
+                            `<button class="btn btn-danger" onclick="deleteArticleConfirm(${article.id})">🗑️ Delete</button>` : '';
 
-                    articlesHTML.push(`
-                        <div class="article-card">
-                            <div class="article-header">
-                                <span class="article-id">#${article.id}</span>
-                                <div class="article-actions">
-                                    ${deleteBtn}
+                        articlesHTML.push(`
+                            <div class="article-card">
+                                <div class="article-header">
+                                    <span class="article-id">#${article.id}</span>
+                                    <div class="article-actions">
+                                        ${deleteBtn}
+                                    </div>
+                                </div>
+                                <div class="article-date">📅 ${formattedDate}</div>
+                                <h3 class="article-title">${article.title}</h3>
+                                <p class="article-content">${linkifyContent(article.content)}</p>
+                                <div class="article-footer">
+                                    <a href="${article.sourceUrl}" target="_blank" class="source-link">
+                                        🔗 Read Source →
+                                    </a>
+                                    <button class="share-btn" onclick="window.open('${twitterShareLink}', '_blank')">
+                                        🐦 Share on X
+                                    </button>
                                 </div>
                             </div>
-                            <div class="article-date">📅 ${formattedDate}</div>
-                            <h3 class="article-title">${article.title}</h3>
-                            <p class="article-content">${linkifyContent(article.content)}</p>
-                            <div class="article-footer">
-                                <a href="${article.sourceUrl}" target="_blank" class="source-link">
-                                    🔗 Read Source →
-                                </a>
-                                <button class="share-btn" onclick="window.open('${twitterShareLink}', '_blank')">
-                                    🐦 Share on X
-                                </button>
-                            </div>
-                        </div>
-                    `);
+                        `);
+                    } catch (err) {
+                        console.error(`Error loading article ${id}:`, err);
+                    }
                 }
 
-                document.getElementById('articlesContainer').innerHTML = 
-                    '<div class="articles-grid">' + articlesHTML.join('') + '</div>';
+                if (articlesHTML.length > 0) {
+                    document.getElementById('articlesContainer').innerHTML = 
+                        '<div class="articles-grid">' + articlesHTML.join('') + '</div>';
+                } else {
+                    document.getElementById('articlesContainer').innerHTML = 
+                        '<div class="loading"><p>No articles available to display.</p></div>';
+                }
             } catch (error) {
                 console.error('Error loading articles:', error);
                 document.getElementById('articlesContainer').innerHTML = 
-                    '<div class="loading"><p style="color: var(--error);">Error loading articles. Please try again.</p></div>';
+                    '<div class="loading"><p style="color: var(--error);">Error loading articles. Please refresh the page.</p></div>';
             }
         }
 
