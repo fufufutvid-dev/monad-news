@@ -340,6 +340,18 @@
             color: var(--text-secondary);
             line-height: 1.6;
             margin-bottom: 15px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .card-content a {
+            color: var(--secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .card-content a:hover {
+            text-decoration: underline;
         }
 
         .card-source {
@@ -766,6 +778,7 @@
             articles.forEach((article, index) => {
                 const card = document.createElement('div');
                 card.className = 'news-card';
+                const contentWithLinks = parseLinks(article.content);
                 card.innerHTML = `
                     <div class="card-header">
                         <div class="card-date">${article.date}</div>
@@ -774,14 +787,19 @@
                         </div>
                     </div>
                     <div class="card-title">${article.title}</div>
-                    <div class="card-content">${article.content}</div>
-                    <div class="card-source">📎 <a href="${article.source}" target="_blank" style="word-break: break-all; cursor: pointer;">${article.source}</a></div>
+                    <div class="card-content">${contentWithLinks}</div>
+                    <div class="card-source">📎 <a href="${article.source}" target="_blank">Source</a></div>
                     <button class="share-btn" onclick="shareArticle('${article.title}', '${article.source}')">
                         Share on Twitter 𝕏
                     </button>
                 `;
                 grid.appendChild(card);
             });
+        }
+
+        function parseLinks(text) {
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            return text.replace(urlRegex, '<a href="$1" target="_blank">$1</a>');
         }
 
         function openPostModal() {
