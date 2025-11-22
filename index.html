@@ -664,7 +664,7 @@
     <script>
         // Configuration
         const CONFIG = {
-            CONTRACT_ADDRESS: '0xa20e64fDB33D36A82311a3CE3fC01950A440D777',
+            CONTRACT_ADDRESS: '0x37772B3021dF185F46372778a947FC470B832348',
             ADMIN_ADDRESS: '0x287aBD1674f25C524503cDA2f1FD42EbECC401eA',
             CHAIN_ID: 10143,
             RPC_URL: 'https://testnet-rpc.monad.xyz'
@@ -757,7 +757,7 @@
                 // Contract ABI from MonadNews contract
                 const contractABI = [
                     "function getLatestArticleIds(uint256 _limit) public view returns (uint256[])",
-                    "function getArticle(uint256 _id) public view returns (uint256 id, string memory title, string memory content, string memory sourceUrl, uint256 timestamp, address author)",
+                    "function getArticle(uint256 _id) public view returns (tuple(uint256 id, string title, string content, string sourceUrl, uint256 timestamp, address author))",
                     "function getTotalArticles() public view returns (uint256)"
                 ];
 
