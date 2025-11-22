@@ -938,16 +938,25 @@
                 btn.innerHTML = 'Publish via Blockchain';
             } catch (error) {
                 console.error('Publish error:', error);
+                console.error('Error code:', error.code);
+                console.error('Error data:', error.data);
+                
                 let errorMsg = 'Failed to publish article';
                 
-                if (error.message.includes('user rejected')) {
+                if (error.message.includes('user rejected') || error.code === 'ACTION_REJECTED') {
                     errorMsg = 'Transaction rejected by user';
                 } else if (error.message.includes('insufficient funds')) {
                     errorMsg = 'Insufficient gas for transaction';
-                } else if (error.message.includes('Only admin')) {
+                } else if (error.message.includes('Only admin') || error.message.includes('only admin')) {
                     errorMsg = 'Only admin can publish articles';
                 } else if (error.message.includes('cannot be empty')) {
                     errorMsg = 'Title and content cannot be empty';
+                } else if (error.message.includes('CALL_EXCEPTION')) {
+                    errorMsg = 'Contract call failed - Check if address is admin in contract';
+                } else if (error.data) {
+                    errorMsg = `Error: ${error.data}`;
+                } else {
+                    errorMsg = error.message || 'Unknown error occurred';
                 }
                 
                 showNotification(errorMsg);
