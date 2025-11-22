@@ -1,41 +1,4 @@
-async function deleteArticleConfirm(id) {
-            if (!confirm(`Are you sure you want to delete article #${id}?\n\nThis action will permanently mark the article as deleted on the blockchain.`)) {
-                return;
-            }
-
-            try {
-                showStatus('🗑️ Deleting article from blockchain...', 'success');
-                
-                const tx = await contract.deleteArticle(id);
-                showStatus('Transaction submitted! Waiting for confirmation...', 'success');
-                
-                await tx.wait();
-                showStatus('✅ Article deleted successfully!', 'success');
-                
-                const articleCards = document.querySelectorAll('.article-card');
-                articleCards.forEach(card => {
-                    const idElement = card.querySelector('.article-id');
-                    if (idElement && idElement.textContent === `#${id}`) {
-                        card.style.animation = 'fadeOut 0.5s ease';
-                        setTimeout(() => {
-                            card.remove();
-                        }, 500);
-                    }
-                });
-                
-                setTimeout(() => {
-                    loadArticles(true);
-                }, 1500);
-                
-            } catch (error) {
-                console.error('Delete error:', error);
-                if (error.code === 'ACTION_REJECTED') {
-                    showStatus('Transaction cancelled by user.', 'error');
-                } else {
-                    showStatus('Failed to delete article: ' + error.message, 'error');
-                }
-            }
-        }<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -47,8 +10,6 @@ async function deleteArticleConfirm(id) {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
         }
 
         :root {
@@ -77,9 +38,6 @@ async function deleteArticleConfirm(id) {
             min-height: 100vh;
             line-height: 1.6;
             position: relative;
-            overflow-x: hidden;
-            margin: 0;
-            padding: 0;
         }
 
         body::before {
@@ -98,12 +56,8 @@ async function deleteArticleConfirm(id) {
         }
 
         @keyframes electricGrid {
-            0% {
-                background-position: 0 0, 0 0;
-            }
-            100% {
-                background-position: 100px 100px, -100px 100px;
-            }
+            0% { background-position: 0 0, 0 0; }
+            100% { background-position: 100px 100px, -100px 100px; }
         }
 
         .lightning-container {
@@ -157,17 +111,6 @@ async function deleteArticleConfirm(id) {
             }
         }
 
-        .lightning-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1;
-            overflow: hidden;
-        }
-
         .floating-particles {
             position: fixed;
             top: 0;
@@ -193,12 +136,8 @@ async function deleteArticleConfirm(id) {
                 transform: translateY(100vh) scale(0);
                 opacity: 0;
             }
-            10% {
-                opacity: 1;
-            }
-            90% {
-                opacity: 1;
-            }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
             100% {
                 transform: translateY(-100vh) scale(1);
                 opacity: 0;
@@ -208,16 +147,10 @@ async function deleteArticleConfirm(id) {
         .container {
             position: relative;
             z-index: 2;
-        }
-
-        .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
-            position: relative;
-            z-index: 2;
             width: 100%;
-            box-sizing: border-box;
         }
 
         header {
@@ -307,22 +240,14 @@ async function deleteArticleConfirm(id) {
             box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
         }
 
-        .btn-secondary {
-            background: rgba(99, 102, 241, 0.1);
-            color: var(--primary);
-            border: 1px solid var(--primary);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(99, 102, 241, 0.2);
-        }
-
         .btn-danger {
             background: rgba(239, 68, 68, 0.1);
             color: var(--error);
             border: 1px solid var(--error);
             padding: 8px 16px;
             font-size: 12px;
+            position: relative;
+            z-index: 10;
         }
 
         .btn-danger:hover {
@@ -497,37 +422,12 @@ async function deleteArticleConfirm(id) {
             text-shadow: 0 0 8px rgba(96, 165, 250, 0.5);
         }
 
-        .source-link {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 13px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.3s ease;
-            position: relative;
-            z-index: 10;
-            cursor: pointer;
-        }
-
         .article-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding-top: 16px;
             border-top: 1px solid var(--border);
-        }
-
-        .source-link {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 13px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.3s ease;
         }
 
         .source-link {
@@ -626,39 +526,34 @@ async function deleteArticleConfirm(id) {
             color: var(--secondary);
         }
 
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+        }
+
         @media (max-width: 768px) {
             .articles-grid {
                 grid-template-columns: 1fr;
             }
-
             .header-content {
                 flex-direction: column;
                 align-items: flex-start;
                 width: 100%;
             }
-
             .logo h1 {
                 font-size: 24px;
             }
-
             .wallet-section {
                 width: 100%;
                 flex-wrap: wrap;
             }
-
             .container {
                 padding: 15px;
             }
-
             .admin-controls {
                 padding: 16px;
-            }
-        }
-
-        @keyframes fadeOut {
-            to {
-                opacity: 0;
-                transform: scale(0.8);
             }
         }
     </style>
@@ -738,8 +633,6 @@ async function deleteArticleConfirm(id) {
             "function getTotalArticles() public view returns (uint256)",
             "function getLatestArticleIds(uint256 _limit) public view returns (uint256[])",
             "function isAdmin(address _address) public view returns (bool)",
-            "function getAllArticleIds() public view returns (uint256[])",
-            "function isArticleDeleted(uint256 _id) public view returns (bool)",
             "event ArticlePublished(uint256 indexed id, string title, address indexed author, uint256 timestamp)",
             "event ArticleDeleted(uint256 indexed id, address indexed deletedBy, uint256 timestamp)"
         ];
@@ -843,8 +736,7 @@ async function deleteArticleConfirm(id) {
 
                         const shareUrl = encodeURIComponent(window.location.href);
                         const shareText = encodeURIComponent(
-                            `🚀 Check out this latest update from Monad ecosystem: "${article.title}"\n\n` +
-                            `Stay informed with MONAD NEWS! 📰\n\n`
+                            `🚀 Check out this latest update from Monad ecosystem: "${article.title}"\n\nStay informed with MONAD NEWS! 📰\n\n`
                         );
                         const twitterShareLink = `https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}`;
 
@@ -919,14 +811,19 @@ async function deleteArticleConfirm(id) {
         }
 
         async function deleteArticleConfirm(id) {
-            if (!confirm(`Are you sure you want to delete article #${id}?\n\nNote: The smart contract doesn't have a delete function yet. This will only hide the article from the UI temporarily until the page is refreshed.`)) {
+            if (!confirm(`Are you sure you want to delete article #${id}?\n\nThis action will permanently mark the article as deleted on the blockchain.`)) {
                 return;
             }
 
             try {
-                showStatus('⚠️ Delete function not available in current smart contract. Please deploy an updated contract with delete functionality.', 'error');
+                showStatus('🗑️ Deleting article from blockchain...', 'success');
                 
-                // Temporary UI removal (will come back on refresh)
+                const tx = await contract.deleteArticle(id);
+                showStatus('Transaction submitted! Waiting for confirmation...', 'success');
+                
+                await tx.wait();
+                showStatus('✅ Article deleted successfully!', 'success');
+                
                 const articleCards = document.querySelectorAll('.article-card');
                 articleCards.forEach(card => {
                     const idElement = card.querySelector('.article-id');
@@ -937,14 +834,19 @@ async function deleteArticleConfirm(id) {
                         }, 500);
                     }
                 });
+                
+                setTimeout(() => {
+                    loadArticles(true);
+                }, 1500);
+                
             } catch (error) {
                 console.error('Delete error:', error);
-                showStatus('Failed to delete article: ' + error.message, 'error');
+                if (error.code === 'ACTION_REJECTED') {
+                    showStatus('Transaction cancelled by user.', 'error');
+                } else {
+                    showStatus('Failed to delete article: ' + error.message, 'error');
+                }
             }
-        }
-
-        async function deleteArticle(id) {
-            showStatus('Delete functionality requires contract upgrade. Article ID: ' + id, 'error');
         }
 
         function showStatus(message, type) {
@@ -957,24 +859,6 @@ async function deleteArticleConfirm(id) {
                 statusEl.style.display = 'none';
             }, 5000);
         }
-
-        window.addEventListener('load', async () => {
-            createLightningEffect();
-            createFloatingParticles();
-            
-            if (typeof window.ethereum !== 'undefined') {
-                window.ethereum.on('accountsChanged', () => {
-                    window.location.reload();
-                });
-                window.ethereum.on('chainChanged', () => {
-                    window.location.reload();
-                });
-            }
-
-            const readProvider = new ethers.JsonRpcProvider(RPC_URL);
-            const readContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, readProvider);
-            loadArticles(false);
-        });
 
         function createLightningEffect() {
             const container = document.querySelector('.lightning-container');
@@ -1018,6 +902,26 @@ async function deleteArticleConfirm(id) {
             const urlRegex = /(https?:\/\/[^\s]+)/g;
             return text.replace(urlRegex, '<a href="$1" target="_blank">$1</a>');
         }
+
+        window.addEventListener('load', async () => {
+            createLightningEffect();
+            createFloatingParticles();
+            
+            if (typeof window.ethereum !== 'undefined') {
+                window.ethereum.on('accountsChanged', () => {
+                    window.location.reload();
+                });
+                window.ethereum.on('chainChanged', () => {
+                    window.location.reload();
+                });
+            }
+
+            try {
+                await loadArticles(false);
+            } catch (error) {
+                console.error('Initialization error:', error);
+            }
+        });
     </script>
 </body>
 </html>
